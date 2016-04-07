@@ -33,7 +33,7 @@ function SayIt($userID) //Adds A Say
 		else
 		{
 			$sayContent = htmlspecialchars($_POST['sayBox']);
-			
+
 			$data = Array(
 				"userID" => $userID,
                	"message" => $sayContent
@@ -305,7 +305,7 @@ function GetActivity($userID, $sayID, $action, $justMe = false, $requestedUserID
 	
 	return $activity;
 }
-/*
+
 function CommentSayIt($userID)
 {
 	global $db, $errorCodes, $request;
@@ -341,31 +341,19 @@ function CommentSayIt($userID)
 		{
 			$sayContent = htmlspecialchars($_POST['commentBox']);
 			
-			// Insert Say into database
-			if ($stmt = $mysqli->prepare("INSERT INTO Says (userID, message) VALUES (?,?)"))
-			{
-				$stmt->bind_param("is", $userID, $sayContent);
-				$stmt->execute();
-				$commentID = $stmt->insert_id;
-				$stmt->close();
-				
-				$say = fetchSay($commentID);
-				
-				if ($stmt = $mysqli->prepare("INSERT INTO Comments (sayID, commentID) VALUES (?,?)"))
-				{
-					$stmt->bind_param("ii", $sayID, $commentID);
-					$stmt->execute();
-					$stmt->close();
-				}
-				else
-				{
-					array_push($errors, $errorCodes["M002"]);
-				}			
-			}
-			else
-			{
-				array_push($errors, $errorCodes["M002"]);
-			}
+			$data = Array(
+							"userID" => $userID,
+			               	"message" => $sayContent
+						);
+
+			$commentID = $db->insert("Says", $data); //This Say is a comment so therefore this is the comment ID
+			$data = Array(
+							"sayID" => $sayID, // THIS is posted with the form and dealt with higher up
+							"commentID" => $commentID
+						);
+
+			$db->insert("Comments", $data);
+			$say = FetchSay($commentID);
 		}
 	}
 	
@@ -384,7 +372,7 @@ function CommentSayIt($userID)
 	
 	return $result;
 }
-*/
+
 function GetSay($userID)
 {
 	global $db, $errorCodes, $request;
@@ -439,7 +427,7 @@ function GetSay($userID)
 	
 	return $result;
 }
-/*
+
 function GetComments($userID)
 {
 	global $db, $errorCodes, $request;
@@ -466,35 +454,20 @@ function GetComments($userID)
 	if ($userID != 0 && isset($sayID))
 	{
 		$commentsQuery = "SELECT sayID FROM Says WHERE sayID IN (SELECT commentID FROM Comments WHERE sayID = ?) ORDER BY timePosted DESC LIMIT 10";
-		
-		if ($stmt = $mysqli->prepare($commentsQuery))
+
+		$queryResult = $db->rawQuery($commentsQuery, Array($sayID));
+		if (count($queryResult) >= 1)
 		{
-			// Bind parameters
-			$stmt->bind_param("i", $sayID);
-			
-			// Execute Query
-			$stmt->execute();
-			
-			// Store result
-			$stmt->store_result();
-			
-			if ($stmt->num_rows >= 1)
-			{
-				// Bind parameters
-				$stmt->bind_result($commentID);
-				
-				while ($stmt->fetch())
-				{
-					array_push($comments, FetchSay($commentID));
-				}	
-			}	
-			$stmt->close();
-		}
+			foreach ($queryResult as $value) {
+				$commentID = $value["sayID"];
+				array_push($comments, FetchSay($commentID));
+			}
+		}	
 		$result["comments"] = $comments;
 	}
 	return $result;
 }
-*/
+
 function SayActivity($userID, $action)
 {
 	global $db, $errorCodes, $request;
