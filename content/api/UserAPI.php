@@ -10,19 +10,19 @@ if (!isset($internal) && !isset($controller)) //check if its not an internal or 
 
 function UserLogin()
 {
-	global $mysqli, $errorCodes;
+	global $db, $errorCodes;
 	// Arrays for jsons
 	$result = array();
 	$errors = array();
 
 	//Pre Requirments
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
 	// email validation
-	if((!isset($_POST['email'])) || (strlen($_POST['email']) == 0)) // Check if the email has been submitted and is longer than 0 chars
+	if ((!isset($_POST['email'])) || (strlen($_POST['email']) == 0)) // Check if the email has been submitted and is longer than 0 chars
 	{
 		array_push($errors, $errorCodes["L002"]);
 	}
@@ -36,70 +36,46 @@ function UserLogin()
 	}
 	
 	//Password validation
-	if(!isset($_POST['password']) || (strlen($_POST['password']) == 0)) // Check if the password has been submitted and is longer than 0 chars
+	if (!isset($_POST['password']) || (strlen($_POST['password']) == 0)) // Check if the password has been submitted and is longer than 0 chars
 	{
 
 		array_push($errors, $errorCodes["L004"]);
 	}
 	
 	//Process
-	if(count($errors) == 0) //If theres no errors so far
+	if (count($errors) == 0) //If theres no errors so far
 	{
 		$userPassword = $_POST['password'];
-				
-		//Prepared statement to prevent (mostly) sql injection
-		if($stmt = $mysqli->prepare("SELECT userID, userPassword FROM UserLogin WHERE userEmail = ?"))
+		
+
+		$queryResult = $db->rawQuery("SELECT userID, userPassword FROM UserLogin WHERE userEmail = ?", Array($emailAddress));
+		if (count($queryResult) == 1)
 		{
-			// Bind parameters
-			$stmt->bind_param("s", $emailAddress);
-			
-			// Execute Query
-			$stmt->execute();
-			
-			// Store result
-			$stmt->store_result();
-			
-			if($stmt->num_rows > 0)
+			$userID = $queryResult[0]["userID"];
+			$hashPass = $queryResult[0]["userPassword"];
+				
+			if (hash_equals(crypt($userPassword, $hashPass),$hashPass))
 			{
-				// Bind parameters
-				$stmt->bind_result($userID, $hashPass);
-				
-				// Fill with values
-				$stmt->fetch();
-						
-				// Free result
-				$stmt->free_result();
-						
-				// Close stmt
-				$stmt->close();
-						
-				if(hash_equals(crypt($userPassword, $hashPass),$hashPass))
-				{
-					$_SESSION['userID'] = $userID;
-				}
-				else
-				{
-					array_push($errors, $errorCodes["L005"]);
-				}
-				
-				if(isset($_POST['rememberMe']))
-				{
-					newUserRememberMeCookie($userID);
-				}
+				$_SESSION['userID'] = $userID;
 			}
 			else
 			{
-				array_push($errors, $errorCodes["L006"]);
+				array_push($errors, $errorCodes["L005"]);
+			}
+			
+			if (isset($_POST['rememberMe']))
+			{
+				newUserRememberMeCookie($userID);
 			}
 		}
 		else
 		{
-			array_push($errors, $errorCodes["L007"]);
+			array_push($errors, $errorCodes["L006"]);
 		}
 	}
 	
 	//Post Processing
-	if(count($errors) == 0) //If no errors user is logged in
+	if (count($errors) == 0) //If no errors user is logged in
 	{
 		$result["message"] = "User Login Successful";
 	}
@@ -115,38 +91,16 @@ function UserLogin()
 
 function CookieLogin()
 {
-	global $mysqli, $errorCodes, $cookieSecret;
+	global $db, $errorCodes, $cookieSecret;
 	if (isset($_COOKIE['rememberMe'])) {
 		list ($userID, $token, $hash) = explode(':', $_COOKIE['rememberMe']);
 
 		if ($hash == hash('sha256', $userID . ':' . $token . $cookieSecret) && !empty($token)) 
 		{
-			$stmt = $mysqli->prepare("SELECT userID FROM UserSessions WHERE rememberMeToken = ?");
-		
-			// Bind parameters
-			$stmt->bind_param("s", $token);
-		
-			// Execute Query
-			$stmt->execute();
-			
-			// Store result
-			$stmt->store_result();
-			
-			if($stmt->num_rows > 0)
-			{
-				// Bind parameters
-				$stmt->bind_result($userID);
-				
-				// Fill with values
-				$stmt->fetch();
-						
-				// Free result
-				$stmt->free_result();
-						
-				// Close stmt
-				$stmt->close();
-				
-				$_SESSION['userID'] = $userID;
+			$queryResult = $db->rawQuery("SELECT userID FROM UserSessions WHERE rememberMeToken = ?", Array($token));			
+			if (count($queryResult) == 1)
+			{			
+				$_SESSION['userID'] = $queryResult[0]["userID"];
 				// Cookie token usable only once
 				newUserRememberMeCookie($userID, $token);
 				return $userID;
@@ -159,26 +113,26 @@ function CookieLogin()
 
 function newUserRememberMeCookie($userID, $currentToken = '')
 {
-	global $mysqli, $errorCodes, $cookieSecret;
+	global $db, $errorCodes, $cookieSecret;
 	$randomToken = hash('sha256', mt_rand());
 	
 	if ($currentToken== '') {
-		$stmt = $mysqli->prepare("INSERT INTO UserSessions (userID, rememberMeToken, loginAgent, loginIP, loginDatetime, lastVisit) VALUES (?, ?, ?, ?, now(), now())");
-		
-		// Bind parameters
-		$stmt->bind_param("isss", $userID, $randomToken, $_SERVER['HTTP_USER_AGENT'], $_SERVER['REMOTE_ADDR']);
-		
-		// Execute Query
-		$stmt->execute();
+		$data = Array ("userID" => $userID,
+               "rememberMeToken" => $randomToken,
+               "loginAgent" => $_SERVER['HTTP_USER_AGENT'],
+			   "loginIP" =>  $_SERVER['REMOTE_ADDR'],
+			   "loginDatetime" => now(),
+			   "lastVisit" => now()
+		);
+		$db->insert ("UserSessions", $data);
 	}
 	else {
-		$stmt = $mysqli->prepare("UPDATE UserSessions SET rememberMeToken = ?, lastVisit = now(), lastVisitAgent = ? WHERE userID = ? AND rememberMeToken = ?");
-
-		// Bind parameters
-		$stmt->bind_param("ssis", $randomToken, $_SERVER['HTTP_USER_AGENT'], $userID, $currentToken);
-		
-		// Execute Query
-		$stmt->execute();
+		$db->where ("userID = ? AND rememberMeToken = ?", Array($userID, $currentToken));
+		$data = Array ("rememberMeToken" => $randomToken,
+               "lastVisit" => now(),
+			   "lastVisitAgent" => $_SERVER['HTTP_USER_AGENT']
+		);
+		$db->update ("UserSessions", $data);
 	}
 	
 	// generate cookie string that consists of userid, randomstring and combined hash of both
@@ -191,18 +145,13 @@ function newUserRememberMeCookie($userID, $currentToken = '')
 
 function deleteRememberMeCookie($userID)
 {
-	global $mysqli, $errorCodes;
+	global $db, $errorCodes;
 	if (isset($_COOKIE['rememberMe'])) {
             list ($user_id, $token, $hash) = explode(':', $_COOKIE['rememberMe']);
             
             if ($hash == hash('sha256', $user_id . ':' . $token . $cookieSecret) && !empty($token)) {
-                $stmt = $mysqli->prepare("DELETE FROM UserSessions WHERE rememberMeToken = ? AND userID = ?");
-		
-				// Bind parameters
-				$stmt->bind_param("si", $token, $userID);
-		
-				// Execute Query
-				$stmt->execute();
+				$db->where("rememberMeToken = ? AND userID = ?", Array($token, $userID));
+				$db->delete("UserSessions");
 			}
         setcookie('rememberMe', false, time() - (3600 * 3650), '/', "kate.ict.op.ac.nz");
     }
@@ -210,7 +159,7 @@ function deleteRememberMeCookie($userID)
 
 function CheckLogin()
 {
-	global $mysqli, $errorCodes, $profileImagePath, $defaultProfileImg;
+	global $db, $errorCodes, $profileImagePath, $defaultProfileImg;
 	$result = array();
 	$errors = array();
 
@@ -218,7 +167,7 @@ function CheckLogin()
 	$profileImagePath = "content/profilePics/";
 
 	//Pre Requirments
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
@@ -227,35 +176,24 @@ function CheckLogin()
 	{
 		$userID = $_SESSION['userID'];
 	}
-	elseif((count($errors) == 0) && isset($_COOKIE['rememberMe']))
+	elseif ((count($errors) == 0) && isset($_COOKIE['rememberMe']))
 	{
-		$userID = CookieLogin();
+		//$userID = CookieLogin();
 	}
 	
 	//Process
 	if ((count($errors) == 0) && (isset($userID)) && ($userID != false))
 	{
-		//Pull user details from the db
-		if($stmt = $mysqli->prepare("SELECT userName, firstName, lastName, profileImage FROM Profile WHERE userID = ?"))
+		$queryResult = $db->rawQuery("SELECT userName, firstName, lastName, profileImage FROM Profile WHERE userID = ?", Array($userID));
+		if (count($queryResult) == 1)
 		{
-			// Bind parameters
-			$stmt->bind_param("i", $userID);
+			$userName = $queryResult[0]["userName"];
+			$firstName = $queryResult[0]["firstName"];
+			$lastName = $queryResult[0]["lastName"];
+			$profileImage = $queryResult[0]["profileImage"];
 			
-			// Execute Query
-			$stmt->execute();
-			
-			// Store result
-			$stmt->store_result();
-			
-			if($stmt->num_rows == 1)
-			{
-				// Bind parameters
-				$stmt->bind_result($userName, $firstName, $lastName, $profileImage);
-				
-				// Fill with values
-				$stmt->fetch();
 						
-				if($profileImage == "")
+				if ($profileImage == "")
 				{
 					$profileImage = $defaultProfileImg;
 				}
@@ -266,22 +204,10 @@ function CheckLogin()
 				"userName" => $userName, 
 				"profileImage" => $profileImagePath . $profileImage,
 				];
-
-			}
-			else
-			{
-				array_push($errors, $errorCodes["C001"]);
-			}
-			
-			/* free result */
-			$stmt->free_result();
-			
-			// Close stmt
-			$stmt->close();
 		}
 		else
 		{
-			array_push($errors, $errorCodes["M002"]);
+			array_push($errors, $errorCodes["C001"]);
 		}
 	}
 	else
@@ -289,7 +215,7 @@ function CheckLogin()
 		array_push($errors, $errorCodes["C002"]);
 	}
 
-	if(count($errors) == 0) //If no errors user is logged in
+	if (count($errors) == 0) //If no errors user is logged in
 	{	
 		$result["message"] = "User Logged In";
 		$result["userData"] = $userData;
@@ -305,18 +231,18 @@ function CheckLogin()
 
 function UserRegister()
 {
-	global $mysqli, $errorCodes;
+	global $db, $errorCodes;
 	$result = array();
 	$errors = array();
 	
 	//Pre Requirments
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
 	//Email Validation
-	if((!isset($_POST['email'])) || (strlen($_POST['email']) == 0)) //Check if the email has been submitted 
+	if ((!isset($_POST['email'])) || (strlen($_POST['email']) == 0)) //Check if the email has been submitted 
 	{
 		array_push($errors, $errorCodes["R002"]);
 	}
@@ -329,72 +255,53 @@ function UserRegister()
 		}
 		else
 		{
-			if((!isset($_POST['emailConfirm'])) || (strlen($_POST['emailConfirm']) == 0)) //Check if the confirmation email has been submitted 
+			if ((!isset($_POST['emailConfirm'])) || (strlen($_POST['emailConfirm']) == 0)) //Check if the confirmation email has been submitted 
 			{
 				array_push($errors, $errorCodes["R004"]);
 			}
 			else
 			{
 				$confirmEmailAddress = filter_var($_POST['emailConfirm'],FILTER_SANITIZE_EMAIL);
-				if($emailAddress != $confirmEmailAddress) //Check if both email addresses match
+				if ($emailAddress != $confirmEmailAddress) //Check if both email addresses match
 				{
 					array_push($errors, $errorCodes["R005"]);
 				}
 				else
 				{
+					$emailCheck = $db->rawQuery("SELECT * FROM UserLogin WHERE userEmail = ?", Array($emailAddress));
 					//Check that email doesnt already exist in the DB	
-					if ($stmt = $mysqli->prepare("SELECT * FROM UserLogin WHERE userEmail = ?")) 
+					if (count($emailCheck) > 0)
 					{
-						/* bind parameters for markers */
-						$stmt->bind_param("s", $emailAddress);
-						/* execute query */
-						$stmt->execute();
-						
-						/* store result */
-						$stmt->store_result();
-											
-						if($stmt->num_rows > 0)
-						{
-							array_push($errors, $errorCodes["R006"]);
-						}
-						/* free result */
-						$stmt->free_result();
-						
-						/* close statement */
-						$stmt->close();
-					}
-					else
-					{
-						array_push($errors, $errorCodes["M002"]);
+						array_push($errors, $errorCodes["R006"]);
 					}
 				}
 			}
 		}
 	}
-	if(!isset($_POST['firstName']) || strlen($_POST['firstName']) == 0) //Check if the first name has been submitted
+	if (!isset($_POST['firstName']) || strlen($_POST['firstName']) == 0) //Check if the first name has been submitted
 	{
 		array_push($errors, $errorCodes["R008"]);
 	}
-	if(!isset($_POST['lastName']) || strlen($_POST['lastName']) == 0) //Check if the last name has been submitted
+	if (!isset($_POST['lastName']) || strlen($_POST['lastName']) == 0) //Check if the last name has been submitted
 	{
 		array_push($errors, $errorCodes["R009"]);
 	}
 		
-	if(isset($_POST['password']) && strlen($_POST['password']) > 0) //check if the password has been submitted
+	if (isset($_POST['password']) && strlen($_POST['password']) > 0) //check if the password has been submitted
 	{
 		$password = $_POST['password'];
 		
 		$passwordCheck = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$";
-		if(!preg_match("/$passwordCheck/", $password )) //check it meets the complexity requirements set above
+		if (!preg_match("/$passwordCheck/", $password )) //check it meets the complexity requirements set above
 		{
 			array_push($errors, $errorCodes["R010"]);
 		}
 		else 
 		{
-			if(isset($_POST['confirmPassword']) && strlen($_POST['confirmPassword']) > 0) //check if the confirmation password has been submitted
+			if (isset($_POST['confirmPassword']) && strlen($_POST['confirmPassword']) > 0) //check if the confirmation password has been submitted
 			{
 				$confirmPassword = $_POST['confirmPassword'];
-				if($confirmPassword != $password) //check the both passwords match
+				if ($confirmPassword != $password) //check the both passwords match
 				{
 					array_push($errors, $errorCodes["R011"]);
 				}
@@ -411,7 +318,7 @@ function UserRegister()
 	}
 	
 	//Process
-	if(count($errors) == 0) //If no errors add the user to the system
+	if (count($errors) == 0) //If no errors add the user to the system
 	{
 		$firstName = filter_var($_POST['firstName'], FILTER_SANITIZE_STRING);
 		$lastName = filter_var($_POST['lastName'], FILTER_SANITIZE_STRING);
@@ -425,14 +332,10 @@ function UserRegister()
 		$hashedPassword = crypt($password, '$5$rounds=5000$'. $salt .'$');
 		
 		//Add user to the Database
-		/* prepare statement */
-		if ($stmt = $mysqli->prepare("INSERT INTO UserLogin (userEmail, userPassword) VALUES (?,?)")) 
-		{
-			$stmt->bind_param("ss", $emailAddress, $hashedPassword);
-			$stmt->execute();
-			$userID = $stmt->insert_id;
-			$stmt->close();
-		}
+		$data = Array ("userEmail" => $emailAddress,
+				"userPassword" => $hashedPassword
+		);
+		$userID = $db->insert ("UserLogin", $data);	
 		
 		//Create Profile
 		CreateProfile($userID, $firstName, $lastName);

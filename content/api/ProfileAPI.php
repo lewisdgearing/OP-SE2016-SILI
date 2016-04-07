@@ -9,118 +9,97 @@ if (!isset($internal) && !isset($controller)) //check if its not an internal or 
 
 function CreateProfileID() //Generate a Unique ProfileID
 {
-	global $mysqli;
-	$profileID = "";
+	global $db;
+	$queryResultID = "";
 
 	//Generate ProfileID
 	do {
 	  	$bytes = openssl_random_pseudo_bytes(10, $cstrong);
 	   	$hex = bin2hex($bytes);
 	   	
+		$queryResult = $db->rawQuery("SELECT profileID FROM Profile WHERE profileID = ?", Array($hex));
 	   	//Check the generated id doesnt already exist
-	   	if($stmt = $mysqli->prepare("SELECT profileID FROM Profile WHERE profileID = ?"))
+		if (count($queryResult) == 0)
 		{
-			
-			$stmt->bind_param("s", $hex);
-			
-			$stmt->execute();
-			
-			
-			$stmt->store_result();
-			
-			if($stmt->num_rows == 0)
-			{
-				$profileID = $hex;
-			}
+			$queryResultID = $hex;
 		}
-	} while ($profileID == "");
+	} while ($queryResultID == "");
 	
-return $profileID;
+return $queryResultID;
 }
 
 function CreateProfile($userID, $firstName, $lastName)
 {
-	global $mysqli;
+	global $db;
 	//Generate ProfileID
-	$profileID = CreateProfileID();
+	$queryResultID = CreateProfileID();
 
 	//add user to profile table
-	if ($stmt = $mysqli->prepare("INSERT INTO Profile (profileID, userID, firstName, lastName) VALUES (?,?,?,?)")) 
-	{
-		$stmt->bind_param("siss", $profileID, $userID, $firstName, $lastName);
-		$stmt->execute();
-		$stmt->close();
-	}
+	$data = Array(
+			"profileID" => $queryResultID,
+            "userID" => $userID,
+            "firstName" => $firstName,
+			"lastName" => $lastName
+	);
+	$queryResult = $db->insert("Profile", $data);
 }
 
 function GetUserAccountSettings($userID)
 {
-	global $mysqli, $errorCodes, $profileImagePath, $defaultProfileImg;
+	global $db, $errorCodes, $profileImagePath, $defaultProfileImg;
 	
 	$result = array();
 	$errors = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
 	else {
-		if($stmt = $mysqli->prepare("SELECT firstName, lastName, userEmail, userName, userBio, dob, gender, location, joinDate, profileImage FROM Profile INNER JOIN UserLogin ON UserLogin.userID=Profile.userID WHERE Profile.userID = ?"))
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userEmail, userName, userBio, dob, gender, location, joinDate, profileImage FROM Profile INNER JOIN UserLogin ON UserLogin.userID=Profile.userID WHERE Profile.userID = ?", Array($userID));
+		if (count($queryResult) == 1)
 		{
-			
-			$stmt->bind_param("i", $userID);
-			
-			
-			$stmt->execute();
-			
-			
-			$stmt->store_result();
-			
-			if($stmt->num_rows == 1)
+			$firstName = $queryResult[0]["firstName"];
+			$lastName = $queryResult[0]["lastName"];
+			$email = $queryResult[0]["userEmail"];
+			$userName = $queryResult[0]["userName"]; 
+			$userBio = $queryResult[0]["userBio"];
+			$dob = $queryResult[0]["dob"];
+			$gender = $queryResult[0]["gender"];
+			$location = $queryResult[0]["location"];
+			$joinDate = $queryResult[0]["joinDate"];
+			$profileImage = $queryResult[0]["profileImage"];
+					
+			if ($profileImage == "")
 			{
-				
-				$stmt->bind_result($firstName, $lastName, $email, $userName, $userBio, $dob, $gender, $location, $joinDate, $profileImage);
-				
-				
-				$stmt->fetch();
-						
-				if($profileImage == "")
-				{
-					$profileImage = $defaultProfileImg;
-				}
-				
-				$profile = [
-				"firstName" => $firstName,
-				"lastName" => $lastName,
-				"userName" => $userName,
-				"email" => $email,
-				"userBio" =>  $userBio,
-				"dob" =>  date("d/m/Y", strtotime($dob)),
-				"gender" =>  $gender,
-				"location" =>  $location,
-				"joinDate" => strtotime($joinDate) * 1000,
-				"profileImage" => $profileImagePath . $profileImage,
-				];
-				
-				
+				$profileImage = $defaultProfileImg;
 			}
 			
+			$queryResult = [
+			"firstName" => $firstName,
+			"lastName" => $lastName,
+			"userName" => $userName,
+			"email" => $email,
+			"userBio" =>  $userBio,
+			"dob" =>  date("d/m/Y", strtotime($dob)),
+			"gender" =>  $gender,
+			"location" =>  $location,
+			"joinDate" => strtotime($joinDate) * 1000,
+			"profileImage" => $profileImagePath . $profileImage,
+			];
 			
-			$stmt->free_result();
 			
-			
-			$stmt->close();
-		}
+		}		
 	}
 	
-	if(count($errors) == 0) //If no errors user is logged in
+	if (count($errors) == 0) //If no errors user is logged in
 	{
-		$result["userProfile"] = $profile;
+		$result["userProfile"] = $queryResult;
 	}
 	else
 	{
@@ -131,106 +110,80 @@ function GetUserAccountSettings($userID)
 
 function GetUserProfile($userID)
 {
-	global $mysqli, $errorCodes, $profileImagePath, $defaultProfileImg, $request;
+	global $db, $errorCodes, $profileImagePath, $defaultProfileImg, $request;
 	
 	$result = array();
 	$errors = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
 
-	if($stmt = $mysqli->prepare("SELECT userName FROM Profile WHERE userID = ?"))
-	{
-		
-		$stmt->bind_param("i", $userID);
-		
-		
-		$stmt->execute();
-		
-		
-		$stmt->store_result();
-		
-		if($stmt->num_rows == 1)
-		{
-			
-			$stmt->bind_result($requestedUserName);
-			
-			
-			$stmt->fetch();
-		}
-	}
+	$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userID = ?", Array($userID));
 
-	if(count($request) >= 3)
+	if (count($queryResult) == 1)
 	{
-		if(strlen($request[2]) > 0)
+		$requestedUserName = $queryResult[0]["userName"];
+	}
+	
+
+	if (count($request) >= 3)
+	{
+		if (strlen($request[2]) > 0)
 		{
 			$requestedUserName = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));	
 		}
 	}
 
-	if(!isset($requestedUserName))
+	if (!isset($requestedUserName))
 	{
 		return null;
 	}
 
-	if($stmt = $mysqli->prepare("SELECT userID, firstName, lastName, userName, userBio, location, profileImage FROM Profile WHERE userName = ?"))
+	$queryResult = $db->rawQuery("SELECT userID, firstName, lastName, userName, userBio, location, profileImage FROM Profile WHERE userName = ?", Array($requestedUserName));
+
+	if (count($queryResult) == 1)
 	{
-		
-		$stmt->bind_param("s", $requestedUserName);
-		
-		
-		$stmt->execute();
-		
-		
-		$stmt->store_result();
-		
-		if($stmt->num_rows == 1)
+		$requestedUserID = $queryResult[0]["userID"];
+		$firstName = $queryResult[0]["firstName"];
+		$lastName = $queryResult[0]["lastName"];
+		$userName = $queryResult[0]["userName"];
+		$userBio = $queryResult[0]["userBio"];
+		$location = $queryResult[0]["location"];
+		$profileImage = $queryResult[0]["profileImage"];
+			
+						
+		if ($profileImage == "")
 		{
-			
-			$stmt->bind_result($requestedUserID, $firstName, $lastName, $userName, $userBio, $location, $profileImage);
-			
-			
-			$stmt->fetch();
-					
-			if($profileImage == "")
-			{
-				$profileImage = $defaultProfileImg;
-			}
-			
-			$profile = [
-			"userID" => str_replace("=", "", base64_encode(str_pad($requestedUserID, 10, '0', STR_PAD_LEFT))),
-			"firstName" => $firstName,
-			"lastName" => $lastName,
-			"userName" => $userName,
-			"userBio" =>  $userBio,
-			"location" =>  $location,
-			"profileImage" => $profileImagePath . $profileImage,
-			"listensTo" => getCount($requestedUserID, "listening"),
-			"audience" => getCount($requestedUserID, "audience"),
-			"listening" => getListeningStatus($userID, $requestedUserID),
-			];
-			
-			
+			$profileImage = $defaultProfileImg;
 		}
 		
+		$queryResult = [
+		"userID" => str_replace("=", "", base64_encode(str_pad($requestedUserID, 10, '0', STR_PAD_LEFT))),
+		"firstName" => $firstName,
+		"lastName" => $lastName,
+		"userName" => $userName,
+		"userBio" =>  $userBio,
+		"location" =>  $location,
+		"profileImage" => $profileImagePath . $profileImage,
+		"listensTo" => getCount($requestedUserID, "listening"),
+		"audience" => getCount($requestedUserID, "audience"),
+		"listening" => getListeningStatus($userID, $requestedUserID),
+		];
 		
-		$stmt->free_result();
 		
-		
-		$stmt->close();
 	}
 	
 	
-	if(count($errors) == 0) //If no errors user is logged in
+	if (count($errors) == 0) //If no errors user is logged in
 	{
-		$result["userProfile"] = $profile;
+		$result["userProfile"] = $queryResult;
 	}
 	else
 	{
@@ -241,52 +194,38 @@ function GetUserProfile($userID)
 }
 
 //Check if the current User is following the user whos profile we are viewing
-function getListeningStatus($userID, $profileUserID)
+function getListeningStatus($userID, $queryResultUserID)
 {
-	global $mysqli;
+	global $db;
 
 	//check its not themself they are viewing
-	if($userID == $profileUserID)
+	if ($userID == $queryResultUserID)
 	{
 		return null;
 	}
 
 	$result = false;
 
-	if($stmt = $mysqli->prepare("SELECT userID FROM Listeners WHERE userID = ? AND listenerUserID = ?"))
+	$queryResult = $db->rawQuery("SELECT userID FROM Listeners WHERE userID = ? AND listenerUserID = ?", Array($userID, $queryResultUserID));
+	if (count($queryResult) == 1)
 	{
-		
-		$stmt->bind_param("ii", $userID, $profileUserID);
-		
-		
-		$stmt->execute();
-
-	
-		$stmt->store_result();
-
-		if($stmt->num_rows == 1)
-		{
-			$result = true;
-		}
+		$result = true;
 	}
-
-	
-	$stmt->close();
 
 	return $result;
 }
 
 function getCount($userID, $type)
 {
-	global $mysqli;
+	global $db;
 
 	if ($type == "audience")
 	{
-		$countQuery = "SELECT count(*) FROM Listeners WHERE listenerUserID = ?";
+		$countQuery = "SELECT count(*) AS count FROM Listeners WHERE listenerUserID = ?";
 	}
 	elseif ($type == "listening")
 	{
-		$countQuery = "SELECT count(*) FROM Listeners WHERE userID = ?";
+		$countQuery = "SELECT count(*) AS count FROM Listeners WHERE userID = ?";
 	}
 
 	else
@@ -294,50 +233,33 @@ function getCount($userID, $type)
 		return null;
 	}
 
-	if($stmt = $mysqli->prepare($countQuery))
-	{
-		
-		$stmt->bind_param("i", $userID);
-		
-		
-		$stmt->execute();
-
-		$stmt->bind_result($count);
-			
-		
-		$stmt->fetch();
-	}
-
-	
-	$stmt->close();
+	$queryResult = $db->rawQuery($countQuery, Array($userID));
+	$count = $queryResult[0]["count"];
 
 	return $count;
 }
 
 function UserSearch()
 {
-	global $mysqli, $errorCodes, $profileImagePath, $defaultProfileImg, $request;
+	global $db, $errorCodes, $profileImagePath, $defaultProfileImg, $request;
 	
 	$result = array();
 	$errors = array();
-	if(count($request) >= 3)
+	if (count($request) >= 3)
 	{
 		$searchResults = array();
 		$searchParam = filter_var($request[2], FILTER_SANITIZE_STRING) . "%";
 		
-		if($stmt = $mysqli->prepare("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userName LIKE ? OR firstName LIKE ? OR lastName  LIKE ?"))
-		{
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userName LIKE ? OR firstName LIKE ? OR lastName  LIKE ?", Array($searchParam, $searchParam, $searchParam));
 			
-			
-			$stmt->bind_param("sss", $searchParam, $searchParam, $searchParam);
-			
-			
-			$stmt->execute();
-			
-			$stmt->bind_result($firstName, $lastName, $userName, $profileImage);
-			
-			 while ($stmt->fetch()) {
-				if($profileImage == "")
+			foreach ($queryResult as $user) 
+			{
+				$firstName = $user["firstName"];
+				$lastName = $user["lastName"];
+				$userName = $user["userName"];
+				$profileImage = $user["profileImage"];
+
+				if ($profileImage == "")
 				{
 					$profileImage = $defaultProfileImg;
 				}
@@ -348,20 +270,13 @@ function UserSearch()
 					"profileLink" => "profile/" . $userName,
 				];	
 				array_push($searchResults, $userResults);
-			 }
-			 $stmt->close();	 
-		}
-		else
-		{
-			array_push($errors, $errorCodes["M002"]);
-		}
-		
+			 } 		
 	}
 	else
 	{
 		array_push($errors, $errorCodes["G000"]);
 	}
-	if(count($errors) == 0)
+	if (count($errors) == 0)
 	{
 		$result = $searchResults;
 	}
@@ -375,20 +290,20 @@ function UserSearch()
 
 function ListenToUser($userID)
 {
-	global $mysqli, $errorCodes, $request;
+	global $db, $errorCodes, $request;
 	
 	$result = array();
 	$errors = array();
 	
 	//Pre Requirments
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 		
 	
 	
-	if(count($request) >= 3)
+	if (count($request) >= 3)
 	{
 		$listenerUserID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
 		if ($userID == $listenerUserID) 
@@ -401,56 +316,37 @@ function ListenToUser($userID)
 		array_push($errors, $errorCodes["G000"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
 	
 	//Process
-	if(count($errors) == 0) //If theres no errors so far
+	if (count($errors) == 0) //If theres no errors so far
 	{	
-		//Check not Already Following
-		if($stmt = $mysqli->prepare("SELECT userID, listenerUserID FROM Listeners WHERE userID = ? AND listenerUserID = ?"))
-		{			
-			
-			$stmt->bind_param("ii", $userID, $listenerUserID);
-			
-			
-			$stmt->execute();
-			
-			
-			$stmt->store_result();
+		
+		$queryResult = $db->rawQuery("SELECT userID, listenerUserID FROM Listeners WHERE userID = ? AND listenerUserID = ?", Array($userID, $listenerUserID));
+		
 
-			if($stmt->num_rows == 0)
-			{
-				//Follow User
-				if($stmt = $mysqli->prepare("INSERT INTO Listeners (userID, listenerUserID) VALUES (?, ?)"))
-				{	
-					
-					$stmt->bind_param("ii", $userID, $listenerUserID);
-					
-					
-					$stmt->execute();
-				}
-				else
-				{
-					array_push($errors, $errorCodes["M002"]);
-				}
-			}
-			else
-			{
-				array_push($errors, $errorCodes["G000"]);
-			}
-						
-			 $stmt->close();	 
+		if (count($queryResult) == 0)
+		{
+			//Follow User
+
+			$data = Array(
+				"userID" => $userID,
+               	"listenerUserID" => $listenerUserID
+			);
+			$id = $db->insert("Listeners", $data);
 		}
 		else
 		{
-			array_push($errors, $errorCodes["M002"]);
+			array_push($errors, $errorCodes["G000"]);
 		}
+						 
 	}
 
-	if(count($errors) == 0)
+
+	if (count($errors) == 0)
 	{
 		$result["message"] = "Listening to User";
 	}
@@ -464,20 +360,20 @@ function ListenToUser($userID)
 
 function StopListenToUser($userID)
 {
-	global $mysqli, $errorCodes, $request;
+	global $db, $errorCodes, $request;
 	
 	$result = array();
 	$errors = array();
 	
 	//Pre Requirments
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 		
 	
 	
-	if(count($request) >= 3)
+	if (count($request) >= 3)
 	{
 		$listenerUserID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
 		if ($userID == $listenerUserID) 
@@ -490,56 +386,33 @@ function StopListenToUser($userID)
 		array_push($errors, $errorCodes["G000"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
 	
 	//Process
-	if(count($errors) == 0) //If theres no errors so far
+	if (count($errors) == 0) //If theres no errors so far
 	{	
-		//Check not Already Following
-		if($stmt = $mysqli->prepare("SELECT userID, listenerUserID FROM Listeners WHERE userID = ? AND listenerUserID = ?"))
-		{			
-			
-			$stmt->bind_param("ii", $userID, $listenerUserID);
-			
-			
-			$stmt->execute();
-			
-			
-			$stmt->store_result();
+		
+		$queryResult = $db->rawQuery("SELECT userID, listenerUserID FROM Listeners WHERE userID = ? AND listenerUserID = ?", Array($userID, $listenerUserID));
+		
 
-			if($stmt->num_rows == 1)
-			{
-				//Follow User
-				if($stmt = $mysqli->prepare("DELETE FROM Listeners WHERE userID = ? AND listenerUserID = ?"))
-				{	
-					
-					$stmt->bind_param("ii", $userID, $listenerUserID);
-					
-					
-					$stmt->execute();
-				}
-				else
-				{
-					array_push($errors, $errorCodes["M002"]);
-				}
-			}
-			else
-			{
-				array_push($errors, $errorCodes["G000"]);
-			}
-						
-			 $stmt->close();	 
+		if (count($queryResult) == 1)
+		{
+		
+			$db->where("userID", $userID);
+			$db->where("listenerUserID", $listenerUserID);
+			$db->delete("Listeners");
+
 		}
 		else
 		{
-			array_push($errors, $errorCodes["M002"]);
-		}
+			array_push($errors, $errorCodes["G000"]);
+		}				
 	}
 
-	if(count($errors) == 0)
+	if (count($errors) == 0)
 	{
 		$result["message"] = "Stopped Listening to User";
 	}
@@ -553,69 +426,55 @@ function StopListenToUser($userID)
 
 function GetListeners($userID)
 {
-	global $mysqli, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
+	global $db, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
 	
 	$result = array();
 	$errors = array();
 	
 	//Pre Requirments
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
 	$listeners = array();
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
 	
 	//Process
-	if(count($errors) == 0) //If theres no errors so far
-	{	
-
-		//Check not Already Following
-		if($stmt = $mysqli->prepare("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userID IN (SELECT listenerUserID FROM Listeners WHERE userID = ?) LIMIT 10"))
-		{			
-			
-			$stmt->bind_param("i", $userID);
-			
-			
-			$stmt->execute();
-			
-			
-			$stmt->store_result();
-
-			if($stmt->num_rows > 0)
-			{
-				$stmt->bind_result($firstName, $lastName, $userName, $profileImage);
-				
-				 while ($stmt->fetch()) {
-					 
-					if($profileImage == "")
-					{
-						$profileImage = $defaultProfileImg;
-					}
-					
-					$listener = [
-						"firstName" => $firstName,
-						"lastName" => $lastName,
-						"userName" => $userName,
-						"profileImage" => $profileImagePath . $profileImage,
-					];	
-					array_push($listeners, $listener);
-				 }
-			}						
-			 $stmt->close();	 
-		}
-		else
+	if (count($errors) == 0) //If theres no errors so far
+	{			
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userID IN (SELECT listenerUserID FROM Listeners WHERE userID = ?) LIMIT 10", Array($userID));
+		if (count($queryResult) > 0)
 		{
-			array_push($errors, $errorCodes["M002"]);
+			foreach ($queryResult as $user) 
+			{
+				$firstName = $user["firstName"];
+				$lastName = $user["lastName"];
+				$userName = $user["userName"];
+				$profileImage = $user["profileImage"];
+					 
+				if ($profileImage == "")
+				{
+					$profileImage = $defaultProfileImg;
+				}
+				
+				$listener = [
+					"firstName" => $firstName,
+					"lastName" => $lastName,
+					"userName" => $userName,
+					"profileImage" => $profileImagePath . $profileImage,
+				];	
+				array_push($listeners, $listener);
+			}				
+ 
 		}
 	}
 
-	if(count($errors) == 0)
+	if (count($errors) == 0)
 	{
 		$result["totalListners"] = count($listeners);
 		$result["listeners"] = $listeners;
@@ -630,69 +489,54 @@ function GetListeners($userID)
 
 function GetAudience($userID)
 {
-	global $mysqli, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
+	global $db, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
 	
 	$result = array();
 	$errors = array();
 	
 	//Pre Requirments
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
 	$audienceMembers = array();
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
 	
 	//Process
-	if(count($errors) == 0) //If theres no errors so far
+	if (count($errors) == 0) //If theres no errors so far
 	{	
-
-		//Check not Already Following
-		if($stmt = $mysqli->prepare("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userID IN (SELECT userID FROM Listeners WHERE listenerUserID = ?) LIMIT 10"))
-		{			
-			
-			$stmt->bind_param("i", $userID);
-			
-			
-			$stmt->execute();
-			
-			
-			$stmt->store_result();
-
-			if($stmt->num_rows > 0)
-			{
-				$stmt->bind_result($firstName, $lastName, $userName, $profileImage);
-				
-				 while ($stmt->fetch()) {
-					 
-					if($profileImage == "")
-					{
-						$profileImage = $defaultProfileImg;
-					}
-					
-					$audienceMember = [
-						"firstName" => $firstName,
-						"lastName" => $lastName,
-						"userName" => $userName,
-						"profileImage" => $profileImagePath . $profileImage,
-					];	
-					array_push($audienceMembers, $audienceMember);
-				 }
-			}						
-			 $stmt->close();	 
-		}
-		else
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userID IN (SELECT userID FROM Listeners WHERE listenerUserID = ?) LIMIT 10", Array($userID));
+		if (count($queryResult) > 0)
 		{
-			array_push($errors, $errorCodes["M002"]);
-		}
+			foreach ($queryResult as $user) 
+			{
+				$firstName = $user["firstName"];
+				$lastName = $user["lastName"];
+				$userName = $user["userName"];
+				$profileImage = $user["profileImage"];
+					 
+				if ($profileImage == "")
+				{
+					$profileImage = $defaultProfileImg;
+				}
+					
+				$audienceMember = [
+					"firstName" => $firstName,
+					"lastName" => $lastName,
+					"userName" => $userName,
+					"profileImage" => $profileImagePath . $profileImage,
+				];	
+				array_push($audienceMembers, $audienceMember);
+			 }
+		}						
 	}
 
-	if(count($errors) == 0)
+	if (count($errors) == 0)
 	{
 		$result["totalAudienceMembers"] = count($audienceMembers);
 		$result["audienceMembers"] = $audienceMembers;
@@ -707,56 +551,56 @@ function GetAudience($userID)
 
 function UpdateProfile($userID)
 {
-	global $mysqli, $errorCodes;
+	global $db, $errorCodes;
 	
 	$result = array();
 	$errors = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
 	
-	if((!isset($_POST['firstName']) || strlen($_POST['firstName']) == 0))
+	if ((!isset($_POST['firstName']) || strlen($_POST['firstName']) == 0))
 	{
 		array_push($errors, $errorCodes["P001"]);
 	}
 	
-	if((!isset($_POST['lastName']) || strlen($_POST['lastName']) == 0))
+	if ((!isset($_POST['lastName']) || strlen($_POST['lastName']) == 0))
 	{
 		array_push($errors, $errorCodes["P002"]);
 	}
 	
-	if((!isset($_POST['userName']) || strlen($_POST['userName']) == 0))
+	if ((!isset($_POST['userName']) || strlen($_POST['userName']) == 0))
 	{
 		array_push($errors, $errorCodes["P003"]);
 	}
 	else
 	{
 		$userNameCheck = "^([a-zA-Z])[a-zA-Z_-]*[\w_-]*[\S]$|^([a-zA-Z])[0-9_-]*[\S]$|^[a-zA-Z]*[\S]{5,20}$";
-		if(!preg_match("/$userNameCheck/", $_POST['userName'])) //check it meets the complexity requirements set above
+		if (!preg_match("/$userNameCheck/", $_POST['userName'])) //check it meets the complexity requirements set above
 		{
 			array_push($errors, $errorCodes["P004"]);
 		}
 	}
 	
-	if((!isset($_POST['dob']) || strlen($_POST['dob']) == 0))
+	if ((!isset($_POST['dob']) || strlen($_POST['dob']) == 0))
 	{
 		array_push($errors, $errorCodes["P005"]);
 	}
 	
-	if((!isset($_POST['gender']) || strlen($_POST['gender']) == 0))
+	if ((!isset($_POST['gender']) || strlen($_POST['gender']) == 0))
 	{
 		array_push($errors, $errorCodes["P006"]);
 	}
 	
 		
-	if(count($errors) == 0) 
+	if (count($errors) == 0) 
 	{
 		$firstName =  filter_var($_POST['firstName'], FILTER_SANITIZE_STRING);
 		$lastName = filter_var($_POST['lastName'], FILTER_SANITIZE_STRING);
@@ -766,36 +610,27 @@ function UpdateProfile($userID)
 		$dob = date("Y-m-d", strtotime($dob));
 		$gender = substr($_POST['gender'], 0, 1);
 
-		if($stmt = $mysqli->prepare("SELECT userName FROM Profile WHERE userName = ? AND userID != ?"))
+		$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userName = ? AND userID != ?", Array($userName, $userID));
+		if (count($queryResult) == 0)
 		{
-			$stmt->bind_param("si",$userName, $userID);
-			
-			
-			$stmt->execute();
+			$data = Array(
+			    "firstName" => $firstName,
+			    "lastName" => $lastName,
+			    "userName" => $userName,
+			    "dob" => $dob,
+			    "gender" => $gender,
 
-			
-			$stmt->store_result();
-
-			if($stmt->num_rows == 0)
-			{
-				if($stmt = $mysqli->prepare("UPDATE Profile SET firstName = ?, lastName = ?, userName = ?, dob = ?, gender = ? WHERE userID = ?"))
-				{
-					
-					$stmt->bind_param("sssssi", $firstName, $lastName, $userName, $dob, $gender, $userID);
-					
-					
-					$stmt->execute();
-				}
-				$stmt->close();	
-			} 
-			else
-			{
-				array_push($errors, $errorCodes["P007"]);
-			}
+			);
+			$db->where("userID", $userID);
+			$db->update("Profile", $data);
+		} 
+		else
+		{
+			array_push($errors, $errorCodes["P007"]);
 		}
 	}
 	
-	if(count($errors) == 0) //If no errors user is logged in
+	if (count($errors) == 0) //If no errors user is logged in
 	{
 		$result["message"] = "Profile Updated";
 	}
@@ -808,42 +643,42 @@ function UpdateProfile($userID)
 
 function UpdatePassword($userID)
 {
-	global $mysqli, $errorCodes;
+	global $db, $errorCodes;
 	
 	$result = array();
 	$errors = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
 	
 	
-	if(!isset($_POST['currentPassword']) || strlen($_POST['currentPassword']) == 0)
+	if (!isset($_POST['currentPassword']) || strlen($_POST['currentPassword']) == 0)
 	{
 		array_push($errors, $errorCodes["P008"]);
 	}
 	
-	if(isset($_POST['newPassword']) && strlen($_POST['newPassword']) > 0)
+	if (isset($_POST['newPassword']) && strlen($_POST['newPassword']) > 0)
 	{
 		$newPassword = $_POST['newPassword'];
 		
 		$passwordCheck = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$";
-		if(!preg_match("/$passwordCheck/", $newPassword )) //check it meets the complexity requirements set above
+		if (!preg_match("/$passwordCheck/", $newPassword )) //check it meets the complexity requirements set above
 		{
 			array_push($errors, $errorCodes["P009"]);
 		}
 		else 
 		{
-			if(isset($_POST['confirmNewPassword']) && strlen($_POST['confirmNewPassword']) > 0) //check if the confirmation password has been submitted
+			if (isset($_POST['confirmNewPassword']) && strlen($_POST['confirmNewPassword']) > 0) //check if the confirmation password has been submitted
 			{
 				$confirmNewPassword = $_POST['confirmNewPassword'];
-				if($confirmNewPassword != $newPassword) //check the both passwords match
+				if ($confirmNewPassword != $newPassword) //check the both passwords match
 				{
 					array_push($errors, $errorCodes["P010"]);
 				}
@@ -855,81 +690,43 @@ function UpdatePassword($userID)
 		}
 	}	
 		
-	if(count($errors) == 0) 
+	if (count($errors) == 0) 
 	{
 		$userPassword = $_POST['currentPassword'];
 		
-		if($stmt = $mysqli->prepare("SELECT userPassword FROM UserLogin WHERE userID = ?"))
+		$queryResult = $db->rawQuery("SELECT userPassword FROM UserLogin WHERE userID = ?", Array($userID));
+		if (count($queryResult) == 1)
 		{
-			
-			$stmt->bind_param("i", $userID);
-			
-			
-			$stmt->execute();
-			
-			
-			$stmt->store_result();
-			
-			if($stmt->num_rows == 1)
-			{
+			$hashPass = $queryResult[0]["userPassword"];
+
+			if (hash_equals(crypt($userPassword, $hashPass),$hashPass))
+			{					
+				$saltLength = 12;
+				//Generate Salt
+				$bytes = openssl_random_pseudo_bytes($saltLength);
+				$salt   = bin2hex($bytes);
 				
-				$stmt->bind_result($hashPass);
+				//hash password
+				$hashedPassword = crypt($newPassword, '$5$rounds=5000$'. $salt .'$');
 				
-				
-				$stmt->fetch();
-						
-				// Free result
-				$stmt->free_result();
-						
-				
-				$stmt->close();
-						
-				if(hash_equals(crypt($userPassword, $hashPass),$hashPass))
-				{					
-					$saltLength = 12;
-					//Generate Salt
-					$bytes = openssl_random_pseudo_bytes($saltLength);
-					$salt   = bin2hex($bytes);
-					
-					//hash password
-					$hashedPassword = crypt($newPassword, '$5$rounds=5000$'. $salt .'$');
-					
-					if($stmt = $mysqli->prepare("UPDATE UserLogin SET userPassword = ? WHERE userID = ?"))
-					{
-						
-						$stmt->bind_param("si", $hashedPassword, $userID);
-						
-						
-						$stmt->execute();
-						
-						$stmt->close();	
-					}
-					else
-					{
-						array_push($errors, $errorCodes["M002"]);
-					}
-					
-					
-				}
-				else
-				{
-					array_push($errors, $errorCodes["P012"]);
-				}
+				$data = Array(
+				    "userPassword" => $hashedPassword,
+				);
+				$db->where("userID", $userID);
+				$db->update("UserLogin", $data);
 			}
 			else
 			{
-				array_push($errors, $errorCodes["G000"]);
+				array_push($errors, $errorCodes["P012"]);
 			}
-			
 		}
 		else
 		{
 			array_push($errors, $errorCodes["G000"]);
-		}
-		
+		}		
 	}
 	
-	if(count($errors) == 0) //If no errors user is logged in
+	if (count($errors) == 0) //If no errors user is logged in
 	{
 		$result["message"] = "Password Updated";
 	}
@@ -942,17 +739,17 @@ function UpdatePassword($userID)
 
 function UpdateBio($userID)
 {
-	global $mysqli, $errorCodes;
+	global $db, $errorCodes;
 	
 	$result = array();
 	$errors = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
@@ -962,22 +759,18 @@ function UpdateBio($userID)
 		array_push($errors, $errorCodes["P013"]);
 	}
 			
-	if(count($errors) == 0) 
+	if (count($errors) == 0) 
 	{
 		$userBio =  substr(htmlentities($_POST['userBio']),0,500);
 
-		if($stmt = $mysqli->prepare("UPDATE Profile SET userBio = ? WHERE userID = ?"))
-		{
-			
-			$stmt->bind_param("si", $userBio, $userID);
-			
-			
-			$stmt->execute();
-		}
-		$stmt->close();	
+		$data = Array(
+			"userBio" => $userBio,
+		);
+		$db->where("userID", $userID);
+		$db->update("Profile", $data);
 	}
 	
-	if(count($errors) == 0) //If no errors user is logged in
+	if (count($errors) == 0) //If no errors user is logged in
 	{
 		$result["message"] = "Bio Updated";
 	}
@@ -990,28 +783,28 @@ function UpdateBio($userID)
 
 function UpdateEmail($userID)
 {
-	global $mysqli, $errorCodes;
+	global $db, $errorCodes;
 	
 	$result = array();
 	$errors = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
 	
 	
-	if(!isset($_POST['currentPassword']) || strlen($_POST['currentPassword']) == 0)
+	if (!isset($_POST['currentPassword']) || strlen($_POST['currentPassword']) == 0)
 	{
 		array_push($errors, $errorCodes["P008"]);
 	}
 	
-	if(isset($_POST['newEmail']) && strlen($_POST['newEmail']) > 0)
+	if (isset($_POST['newEmail']) && strlen($_POST['newEmail']) > 0)
 	{
 		$newEmailAddress = filter_var($_POST['newEmail'],FILTER_SANITIZE_EMAIL);
 		
@@ -1021,14 +814,14 @@ function UpdateEmail($userID)
 		}
 		else
 		{
-			if((!isset($_POST['confirmNewEmail'])) || (strlen($_POST['confirmNewEmail']) == 0)) //Check if the confirmation email has been submitted 
+			if ((!isset($_POST['confirmNewEmail'])) || (strlen($_POST['confirmNewEmail']) == 0)) //Check if the confirmation email has been submitted 
 			{
 				array_push($errors, $errorCodes["P015"]);
 			}
 			else
 			{
 				$confirmNewEmail = filter_var($_POST['confirmNewEmail'],FILTER_SANITIZE_EMAIL);
-				if($newEmailAddress != $confirmNewEmail) //Check if both email addresses match
+				if ($newEmailAddress != $confirmNewEmail) //Check if both email addresses match
 				{
 					array_push($errors, $errorCodes["P016"]);
 				}
@@ -1036,83 +829,47 @@ function UpdateEmail($userID)
 		}
 	}	
 		
-	if(count($errors) == 0) 
+	if (count($errors) == 0) 
 	{
 		$userPassword = $_POST['currentPassword'];
+
+
 		
-		if($stmt = $mysqli->prepare("SELECT userPassword FROM UserLogin WHERE userID = ?"))
+		$queryResult = $db->rawQuery("SELECT userPassword FROM UserLogin WHERE userID = ?", Array($userID));
+		if (count($queryResult) == 1)
 		{
-			
-			$stmt->bind_param("i", $userID);
-			
-			
-			$stmt->execute();
-			
-			
-			$stmt->store_result();
-			
-			if($stmt->num_rows == 1)
-			{
-				
-				$stmt->bind_result($hashPass);
-				
-				
-				$stmt->fetch();
-						
-				// Free result
-				$stmt->free_result();
-						
-				
-				$stmt->close();
-						
-				if(hash_equals(crypt($userPassword, $hashPass),$hashPass))
-				{					
-					if($stmt = $mysqli->prepare("SELECT userEmail FROM UserLogin WHERE userEmail = ?"))
-					{
-						
-						$stmt->bind_param("s", $newEmailAddress);
-						
-						
-						$stmt->execute();
-						
-						
-						$stmt->store_result();
-						
-						if($stmt->num_rows == 0)
-						{
-							if($stmt = $mysqli->prepare("UPDATE UserLogin SET userEmail = ? WHERE userID = ?"))
-							{
-								
-								$stmt->bind_param("si", $newEmailAddress, $userID);
-								
-								
-								$stmt->execute();
-							}
-						}
-						else
-						{
-							array_push($errors, $errorCodes["P017"]);
-						}
-					}					
+			$hashPass = $queryResult[0]["userPassword"];
+					
+			if (hash_equals(crypt($userPassword, $hashPass),$hashPass))
+			{		
+				$queryResult = $db->rawQuery("SELECT userEmail FROM UserLogin WHERE userEmail = ?", Array($newEmailAddress));			
+				if (count($queryResult) == 0)
+				{
+
+					$data = Array(
+						"userEmail" => $newEmailAddress,
+					);
+					$db->where("userID", $userID);
+					$db->update("UserLogin", $data);
+							
 				}
 				else
 				{
-					array_push($errors, $errorCodes["P012"]);
-				}
+					array_push($errors, $errorCodes["P017"]);
+				}				
 			}
 			else
 			{
-				array_push($errors, $errorCodes["G000"]);
+				array_push($errors, $errorCodes["P012"]);
 			}
-			
 		}
 		else
 		{
-			array_push($errors, $errorCodes["M002"]);
+			array_push($errors, $errorCodes["G000"]);
 		}
 	}
 	
-	if(count($errors) == 0) //If no errors user is logged in
+	if (count($errors) == 0) //If no errors user is logged in
 	{
 		$result["message"] = "Email Updated";
 	}

@@ -9,23 +9,24 @@ if (!isset($internal) && !isset($controller)) //check if its not an internal or 
 
 function SayIt($userID) //Adds A Say
 {
-	global $mysqli, $errorCodes;
+	global $db, $errorCodes;
 	// Arrays for jsons
 	$result = array();
 	$errors = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["S002"]);
 	}
-	else {
+	else 
+	{
 		// Check if the Say has been submitted and is longer than 0 chars
-		if((!isset($_POST['sayBox'])) || (strlen($_POST['sayBox']) == 0))
+		if ((!isset($_POST['sayBox'])) || (strlen($_POST['sayBox']) == 0))
 		{
 			array_push($errors, $errorCodes["S003"]);
 		}
@@ -33,26 +34,18 @@ function SayIt($userID) //Adds A Say
 		{
 			$sayContent = htmlspecialchars($_POST['sayBox']);
 			
-			// Insert Say into database
-			if($stmt = $mysqli->prepare("INSERT INTO Says (userID, message) VALUES (?,?)"))
-			{
-				$stmt->bind_param("is", $userID, $sayContent);
-				$stmt->execute();
-				$sayID = $stmt->insert_id;
-				$stmt->close();
-				
-				$say = FetchSay($sayID);
-				
-			}
-			else
-			{
-				array_push($errors, $errorCodes["M002"]);
-			}
+			$data = Array(
+				"userID" => $userID,
+               	"message" => $sayContent
+			);
+			$sayID = $db->insert("Says", $data);
+
+			$say = FetchSay($sayID);
 		}
 	}
 	
 	// If no errors insert Say message into database
-	if(count($errors) == 0)
+	if (count($errors) == 0)
 	{
 		$result["message"] = "Say has been added";
 		$result["say"] = $say;
@@ -69,12 +62,12 @@ function SayIt($userID) //Adds A Say
 
 function GetSays($userID) //Returns all the says based of the people listened to by the logged in user
 {	
-	global $mysqli, $errorCodes;
+	global $db, $errorCodes;
 	// Arrays for jsons
 	$result = array();
 	$says = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
@@ -83,29 +76,15 @@ function GetSays($userID) //Returns all the says based of the people listened to
 	{
 		$saysQuery = "SELECT sayID FROM Says WHERE (userID IN (SELECT listenerUserID FROM Listeners WHERE userID = ?) OR userID = ? OR sayID IN (SELECT sayID FROM Activity WHERE userID IN (SELECT listenerUserID FROM Listeners WHERE userID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments) ORDER BY timePosted DESC";	
 		
-		if($stmt = $mysqli->prepare($saysQuery))
+		$queryResult = $db->rawQuery($saysQuery, Array($userID, $userID, $userID));
+		if (count($queryResult) >= 1)
 		{
-			// Bind parameters
-			$stmt->bind_param("iii", $userID, $userID, $userID);
-			
-			// Execute Query
-			$stmt->execute();
-			
-			// Store result
-			$stmt->store_result();
-			
-			if($stmt->num_rows >= 1)
-			{
-				// Bind parameters
-				$stmt->bind_result($sayID);
-				
-				while ($stmt->fetch()) {
-					array_push($says, FetchSay($sayID));
-				}
-			}	
-			$stmt->close();
-		}
-		
+			foreach ($queryResult as $value) {
+				$sayID = $value["sayID"];
+				array_push($says, FetchSay($sayID));
+			}
+		}	
+
 		$result["says"] = $says;
 	}
 	
@@ -114,82 +93,75 @@ function GetSays($userID) //Returns all the says based of the people listened to
 
 function FetchSay($sayID, $justMe = false, $requestedUserID = 0) //Fetches the Say
 {
-	global $mysqli, $profileImagePath, $defaultProfileImg, $userID;
+	global $db, $profileImagePath, $defaultProfileImg, $userID;
 	$say = array();
-	if($stmt = $mysqli->prepare("SELECT LPAD(sayID, 10, '0') as sayIDFill, timePosted, message, profileImage, firstName, lastName, userName, Says.userID FROM Says INNER JOIN Profile ON Says.userID=Profile.userID WHERE sayID = ?"))
-	{
-		// Bind parameters
-		$stmt->bind_param("i", $sayID);
-		
-		// Execute Query
-		$stmt->execute();
-		
-		// Store result
-		$stmt->store_result();
-		
-		if($stmt->num_rows == 1)
-		{
-			// Bind parameters
-			$stmt->bind_result($sayIDFill, $timePosted, $message, $profileImage, $firstName, $lastName, $userName, $postUserID);
-			
-			// Fill with values
-			$stmt->fetch();
-					
-			if($profileImage == "")
-			{
-				$profileImage = $defaultProfileImg;
-			}
-			
-			$ownSay = GetOwnSayStatus($sayID, $userID);
 
-			$say = [
-			"sayID" => str_replace("=", "", base64_encode($sayIDFill)),
-			"timePosted" => strtotime($timePosted) * 1000,
-			"message" => $message,
-			"profileImage" => $profileImagePath . $profileImage,
-			"profileLink" => "profile/" . $userName,
-			"firstName" => $firstName,
-			"lastName" => $lastName,
-			"userName" => $userName,
-			"boos" => GetActivityCount($sayID, "Boo"),
-			"applauds" => GetActivityCount($sayID, "Applaud"),
-			"resays" => GetActivityCount($sayID, "Re-Say"),
-			"booStatus" => GetActivityStatus($userID, $sayID, "Boo"),
-			"applaudStatus" => GetActivityStatus($userID, $sayID, "Applaud"),
-			"resayStatus" => GetActivityStatus($userID, $sayID, "Re-Say"),
-			"ownSay" => $ownSay,
-			"activityStatus" => GetActivity($userID, $sayID, "Re-Say", $justMe, $requestedUserID),
-			];
-		}	
+	$queryResult = $db->rawQuery("SELECT LPAD(sayID, 10, '0') as sayIDFill, timePosted, message, profileImage, firstName, lastName, userName, Says.userID as postUserID FROM Says INNER JOIN Profile ON Says.userID=Profile.userID WHERE sayID = ?", Array($sayID));
 		
-		$stmt->close();
-	}
+	if (count($queryResult) == 1)
+	{
+
+		$sayIDFill = $queryResult[0]["sayIDFill"];
+		$timePosted = $queryResult[0]["timePosted"];
+		$message = $queryResult[0]["message"];
+		$profileImage = $queryResult[0]["profileImage"];
+		$firstName = $queryResult[0]["firstName"];
+		$lastName = $queryResult[0]["lastName"];
+		$userName = $queryResult[0]["userName"];
+		$postUserID = $queryResult[0]["postUserID"];
+						
+		if ($profileImage == "")
+		{
+			$profileImage = $defaultProfileImg;
+		}
+		
+		$ownSay = GetOwnSayStatus($sayID, $userID);
+
+		$say = [
+		"sayID" => str_replace("=", "", base64_encode($sayIDFill)),
+		"timePosted" => strtotime($timePosted) * 1000,
+		"message" => $message,
+		"profileImage" => $profileImagePath . $profileImage,
+		"profileLink" => "profile/" . $userName,
+		"firstName" => $firstName,
+		"lastName" => $lastName,
+		"userName" => $userName,
+		"boos" => GetActivityCount($sayID, "Boo"),
+		"applauds" => GetActivityCount($sayID, "Applaud"),
+		"resays" => GetActivityCount($sayID, "Re-Say"),
+		"booStatus" => GetActivityStatus($userID, $sayID, "Boo"),
+		"applaudStatus" => GetActivityStatus($userID, $sayID, "Applaud"),
+		"resayStatus" => GetActivityStatus($userID, $sayID, "Re-Say"),
+		"ownSay" => $ownSay,
+		"activityStatus" => GetActivity($userID, $sayID, "Re-Say", $justMe, $requestedUserID),
+		];
+	}	
 	
 	return $say;
 }
 
 function GetUserSays($userID) //Get the says of a user
 {
-	global $mysqli, $errorCodes, $request;
+	global $db, $errorCodes, $request;
 	// Arrays for jsons
 	$result = array();
 	$says = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
 	
 	$requestedUserID = 0;
 
-	if(count($request) >= 3)
+	if (count($request) >= 3)
 	{
-		if(strlen($request[2]) > 0)
+		if (strlen($request[2]) > 0)
 		{
 			$requestedUserName = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));	
 		} 
@@ -199,31 +171,17 @@ function GetUserSays($userID) //Get the says of a user
 		}
 	}
 
-	if(isset($requestedUserName) && strlen($requestedUserName) > 0)
+	if (isset($requestedUserName) && strlen($requestedUserName) > 0)
 	{
-		if($stmt = $mysqli->prepare("SELECT userID FROM Profile WHERE userName = ?"))
+		$queryResult = $db->rawQuery("SELECT userID FROM Profile WHERE userName = ?", Array($requestedUserName));
+
+		if (count($queryResult) == 1)
 		{
-			
-			$stmt->bind_param("s", $requestedUserName);
-			
-			
-			$stmt->execute();
-			
-			
-			$stmt->store_result();
-			
-			if($stmt->num_rows == 1)
-			{
-				
-				$stmt->bind_result($requestedUserID);
-				
-				
-				$stmt->fetch();
-			}
+			$requestedUserID = $queryResult[0]["userID"];
 		}
 	}
 	
-	if(!isset($requestedUserID))
+	if (!isset($requestedUserID))
 	{
 		return null;
 	}
@@ -233,114 +191,76 @@ function GetUserSays($userID) //Get the says of a user
 	{
 		$saysQuery = "SELECT sayID FROM Says WHERE userID = ?  OR sayID IN (SELECT sayID FROM Activity WHERE userID = ? AND activity = \"Re-Say\") ORDER BY timePosted DESC LIMIT 10";	
 		
-		if($stmt = $mysqli->prepare($saysQuery))
+		$queryResult = $db->rawQuery($saysQuery , Array($requestedUserID, $requestedUserID));
+
+		if (count($queryResult) >= 1)
 		{
-			// Bind parameters
-			$stmt->bind_param("ii", $requestedUserID, $requestedUserID);
-			
-			// Execute Query
-			$stmt->execute();
-			
-			// Store result
-			$stmt->store_result();
-			
-			if($stmt->num_rows >= 1)
+			foreach ($queryResult as $value) 
 			{
-				// Bind parameters
-				$stmt->bind_result($sayID);
-				
-				while ($stmt->fetch()) {
-					array_push($says, FetchSay($sayID, true, $requestedUserID));
-				}
-			}	
-			$stmt->close();
-		}
-		
-		$result["says"] = $says;
+				$sayID = $value["sayID"];
+				array_push($says, FetchSay($sayID, true, $requestedUserID));
+			}
+		}	
 	}
+		
+	$result["says"] = $says;
 	
 	return $result;
 }
 
 function GetActivityCount($sayID, $action)
 {
-	global $mysqli;
+	global $db;
 	$count = 0;
-	if($stmt = $mysqli->prepare("SELECT COUNT(*) as count FROM Activity WHERE activity = ? AND sayID = ?"))
+	$queryResult = $db->rawQuery("SELECT COUNT(*) as count FROM Activity WHERE activity = ? AND sayID = ?" , Array($action, $sayID));
+	if (count($queryResult) == 1)
 	{
-		// Bind parameters
-		$stmt->bind_param("si", $action, $sayID);
-		
-		// Execute Query
-		$stmt->execute();
-		
-		$stmt->bind_result($count);
-		
-		$stmt->fetch();
-		
+		$count = $queryResult[0]["count"];
 	}
-	$stmt->close();
 	return $count;
 }
 
 function GetOwnSayStatus($sayID, $userID)
 {
-	global $mysqli;
+	global $db;
 	$status = false;
-	if($stmt = $mysqli->prepare("SELECT userID FROM Says WHERE sayID = ?"))
-	{
-		// Bind parameters
-		$stmt->bind_param("i", $sayID);
-		
-		// Execute Query
-		$stmt->execute();
-		
-		$stmt->bind_result($postUserID);
-		
-		$stmt->fetch();
 
-		if($userID == $postUserID)
+	$queryResult = $db->rawQuery("SELECT userID FROM Says WHERE sayID = ?" , Array($sayID));
+	if (count($queryResult) == 1)
+	{
+		$postUserID = $queryResult[0]["userID"];
+
+		if ($userID == $postUserID)
 		{
 			$status = true;
 		}
-		
 	}
-	$stmt->close();
+	
 	return $status;
 }
 function GetActivityStatus($userID, $sayID, $action)
 {
-	global $mysqli;
+	global $db;
 	$status = false;
-	if($stmt = $mysqli->prepare("SELECT COUNT(*) as count FROM Activity WHERE activity = ? AND sayID = ? AND userID = ?"))
+
+	$queryResult = $db->rawQuery("SELECT COUNT(*) as count FROM Activity WHERE activity = ? AND sayID = ? AND userID = ?" , Array($action, $sayID, $userID));
+	if (count($queryResult) == 1)
 	{
-		// Bind parameters
-		$stmt->bind_param("sii", $action, $sayID, $userID);
-		
-		// Execute Query
-		$stmt->execute();
-		
-		// Store result
-		$stmt->store_result();
-		
-		$stmt->bind_result($count);
-		
-		$stmt->fetch();
-		
+		$count = $queryResult[0]["count"];
+	
 		if ($count == 1)
 		{
 			$status = true;
 		}
 		
 	}
-	$stmt->close();
 	
 	return $status;
 }
 
 function GetActivity($userID, $sayID, $action, $justMe = false, $requestedUserID = 0)
 {
-	global $mysqli, $profileImagePath, $defaultProfileImg;
+	global $db, $profileImagePath, $defaultProfileImg;
 	$activity = false;
 	if ($justMe)
 	{
@@ -351,69 +271,54 @@ function GetActivity($userID, $sayID, $action, $justMe = false, $requestedUserID
 		$activityQuery = "SELECT userID FROM Activity WHERE userID IN (SELECT listenerUserID FROM Listeners WHERE userID = ?) AND activity = ? AND sayID = ?";
 		$requestedUserID = $userID;
 	}
-	if($stmt = $mysqli->prepare($activityQuery))
+
+	$queryResult = $db->rawQuery($activityQuery , Array($requestedUserID, $action, $sayID));
+	if (count($queryResult) >= 1)
 	{
-		// Bind parameters
-		$stmt->bind_param("isi",$requestedUserID, $action, $sayID);
-		
-		// Execute Query
-		$stmt->execute();
-		
-		// Store result
-		$stmt->store_result();
-			
-		if($stmt->num_rows >= 1)
+	
+		$activityUserID = $queryResult[0]["userID"];
+	
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userID = ?" , Array($activityUserID));
+	
+		if (count($queryResult) == 1)
 		{
-		
-			$stmt->bind_result($activityUserID);
-		
-			$stmt->fetch();
-		
-			if($stmt = $mysqli->prepare("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userID = ?"))
+			$firstName = $queryResult[0]["firstName"];
+			$lastName = $queryResult[0]["lastName"];
+			$userName = $queryResult[0]["userName"];
+			$profileImage = $queryResult[0]["profileImage"];
+					
+			if ($profileImage == "")
 			{
-				$stmt->bind_param("i",$activityUserID);
-				
-				// Execute Query
-				$stmt->execute();
-			
-				$stmt->bind_result($firstName, $lastName, $userName, $profileImage);
-			
-				$stmt->fetch();
-				
-				if($profileImage == "")
-				{
-					$profileImage = $defaultProfileImg;
-				}
-				
-				$activity = [
-					"profileImage" => $profileImagePath . $profileImage,
-					"firstName" => $firstName,
-					"lastName" => $lastName,
-					"userName" => $userName,
-					"profileLink" => "profile/" . $userName,
-				];
+				$profileImage = $defaultProfileImg;
 			}
+			
+			$activity = [
+				"profileImage" => $profileImagePath . $profileImage,
+				"firstName" => $firstName,
+				"lastName" => $lastName,
+				"userName" => $userName,
+				"profileLink" => "profile/" . $userName,
+			];
 		}
 	}
 	
-	$stmt->close();
 	
 	return $activity;
 }
-
+/*
 function CommentSayIt($userID)
 {
-	global $mysqli, $errorCodes, $request;
+	global $db, $errorCodes, $request;
 	// Arrays for jsons
 	$result = array();
 	$errors = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if(count($request) >= 3)
+	if (count($request) >= 3)
 	{
 		$sayID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
 	}
@@ -422,13 +327,13 @@ function CommentSayIt($userID)
 		array_push($errors, $errorCodes["Co04"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["Co02"]);
 	}
 	else {
 		// Check if the Say has been submitted and is longer than 0 chars
-		if((!isset($_POST['commentBox'])) || (strlen($_POST['commentBox']) == 0))
+		if ((!isset($_POST['commentBox'])) || (strlen($_POST['commentBox']) == 0))
 		{
 			array_push($errors, $errorCodes["Co03"]);
 		}
@@ -437,7 +342,7 @@ function CommentSayIt($userID)
 			$sayContent = htmlspecialchars($_POST['commentBox']);
 			
 			// Insert Say into database
-			if($stmt = $mysqli->prepare("INSERT INTO Says (userID, message) VALUES (?,?)"))
+			if ($stmt = $mysqli->prepare("INSERT INTO Says (userID, message) VALUES (?,?)"))
 			{
 				$stmt->bind_param("is", $userID, $sayContent);
 				$stmt->execute();
@@ -446,7 +351,7 @@ function CommentSayIt($userID)
 				
 				$say = fetchSay($commentID);
 				
-				if($stmt = $mysqli->prepare("INSERT INTO Comments (sayID, commentID) VALUES (?,?)"))
+				if ($stmt = $mysqli->prepare("INSERT INTO Comments (sayID, commentID) VALUES (?,?)"))
 				{
 					$stmt->bind_param("ii", $sayID, $commentID);
 					$stmt->execute();
@@ -465,7 +370,7 @@ function CommentSayIt($userID)
 	}
 	
 	// If no errors insert Comment message into database
-	if(count($errors) == 0)
+	if (count($errors) == 0)
 	{
 		$result["message"] = "Comment has been added";
 		$result["comment"] = $say;
@@ -479,21 +384,21 @@ function CommentSayIt($userID)
 	
 	return $result;
 }
-
+*/
 function GetSay($userID)
 {
-	global $mysqli, $errorCodes, $request;
+	global $db, $errorCodes, $request;
 	
 	// Arrays for jsons
 	$result = array();
 	$errors = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if(count($request) >= 3)
+	if (count($request) >= 3)
 	{
 		$sayID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
 	}
@@ -502,7 +407,7 @@ function GetSay($userID)
 		array_push($errors, $errorCodes["G000"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
@@ -511,33 +416,17 @@ function GetSay($userID)
 		
 		$saysQuery = "SELECT sayID FROM Says WHERE sayID = ?";	
 		
-		if($stmt = $mysqli->prepare($saysQuery))
-		{
-			// Bind parameters
-			$stmt->bind_param("i", $sayID);
-			
-			// Execute Query
-			$stmt->execute();
-			
-			// Store result
-			$stmt->store_result();
-			
-			if($stmt->num_rows == 1)
-			{
-				// Bind parameters
-				$stmt->bind_result($sayID);
-				
-				while ($stmt->fetch()) {
-					$say = FetchSay($sayID);
-				}
-			}	
-			$stmt->close();
+		$queryResult = $db->rawQuery($saysQuery , Array($sayID));
+		if (count($queryResult) == 1)
+		{	
+			$sayID = $queryResult[0]["sayID"];
+			$say = FetchSay($sayID);
 		}	
 
 	}
 	
 	// If no errors insert Say message into database
-	if(count($errors) == 0)
+	if (count($errors) == 0)
 	{
 		$result["say"] = $say;
 		
@@ -550,20 +439,20 @@ function GetSay($userID)
 	
 	return $result;
 }
-
+/*
 function GetComments($userID)
 {
-	global $mysqli, $errorCodes, $request;
+	global $db, $errorCodes, $request;
 	// Arrays for jsons
 	$result = array();
 	$errors = array();
 	
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if(count($request) >= 3)
+	if (count($request) >= 3)
 	{
 		$sayID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
 	}
@@ -578,7 +467,7 @@ function GetComments($userID)
 	{
 		$commentsQuery = "SELECT sayID FROM Says WHERE sayID IN (SELECT commentID FROM Comments WHERE sayID = ?) ORDER BY timePosted DESC LIMIT 10";
 		
-		if($stmt = $mysqli->prepare($commentsQuery))
+		if ($stmt = $mysqli->prepare($commentsQuery))
 		{
 			// Bind parameters
 			$stmt->bind_param("i", $sayID);
@@ -589,7 +478,7 @@ function GetComments($userID)
 			// Store result
 			$stmt->store_result();
 			
-			if($stmt->num_rows >= 1)
+			if ($stmt->num_rows >= 1)
 			{
 				// Bind parameters
 				$stmt->bind_result($commentID);
@@ -605,24 +494,24 @@ function GetComments($userID)
 	}
 	return $result;
 }
-
+*/
 function SayActivity($userID, $action)
 {
-	global $mysqli, $errorCodes, $request;
+	global $db, $errorCodes, $request;
 	
 	$result = array();
 	$errors = array();
 	
 	//Pre Requirments
-	if ($mysqli->connect_errno) 
+	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 		
-	if(count($request) >= 3)
+	if (count($request) >= 3)
 	{
 		$sayID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
-		if($action == "Re-Say" && GetOwnSayStatus($sayID, $userID))
+		if ($action == "Re-Say" && GetOwnSayStatus($sayID, $userID))
 		{
 			array_push($errors, $errorCodes["G000"]);	
 		}
@@ -632,7 +521,7 @@ function SayActivity($userID, $action)
 		array_push($errors, $errorCodes["G000"]);
 	}
 	
-	if($userID == 0)
+	if ($userID == 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
@@ -651,48 +540,31 @@ function SayActivity($userID, $action)
 	 }
 
 	//Process
-	if(count($errors) == 0) //If theres no errors so far
+	if (count($errors) == 0) //If theres no errors so far
 	{	
 		if ($action == "Re-Say" || !GetActivityStatus($userID, $sayID, $reverseAction)) 
 		{
-			if(!GetActivityStatus($userID, $sayID, $action))
+			if (!GetActivityStatus($userID, $sayID, $action))
 			{
-				//Follow User
-				if($stmt = $mysqli->prepare("INSERT INTO Activity (userID, sayID, activity) VALUES (?, ?, ?)"))
-				{	
-					// Bind parameters
-					$stmt->bind_param("iis", $userID, $sayID, $action);
+				$data = Array(
+					"userID" => $userID,
+	               	"sayID" => $sayID,
+	               	"activity" => $action
+				);
+				$db->insert("Activity", $data);
 					
-					// Execute Query
-					$stmt->execute();
-					
-					$status = true;
-				}
-				else
-				{
-					array_push($errors, $errorCodes["M002"]);
-				}
+				$status = true;
 			}
 			else
 			{
-				if($stmt = $mysqli->prepare("DELETE FROM Activity  WHERE userID = ? AND sayID = ? AND activity = ? "))
-				{	
-					// Bind parameters
-					$stmt->bind_param("iis", $userID, $sayID, $action);
-					
-					// Execute Query
-					$stmt->execute();
-					
-					$status = false;
-					
-					
-				}
-				else
-				{
-					array_push($errors, $errorCodes["M002"]);
-				}
-			}
-			$stmt->close();	 
+
+				$db->where("userID", $userID);
+				$db->where("sayID", $sayID);
+				$db->where("activity", $action);
+				$db->delete("Activity");
+				
+				$status = false;
+			} 
 		}
 		else
 		{
@@ -700,7 +572,7 @@ function SayActivity($userID, $action)
 		}
 	}
 	
-	if(count($errors) == 0)
+	if (count($errors) == 0)
 	{
 		$result["message"] = "Action Completed";
 		$result["status"] = $status;

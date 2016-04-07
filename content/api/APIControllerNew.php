@@ -8,6 +8,7 @@ if($status == PHP_SESSION_NONE){
 $controller = true;
 
 //Include all the API file
+require_once ("../config/MysqliDb.php");
 include("../config/dbconnect.inc.php");
 include("../config/errorHandling.php");
 include("../config/APIrequestsNew.php");
@@ -79,7 +80,4 @@ function is_ajax()
 {
 	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 }
-
-$mysqli->close();	
-
 ?>
