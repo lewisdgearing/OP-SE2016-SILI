@@ -1,4 +1,19 @@
 <?php
+ /**
+  * SILI Say API
+  *
+  * Say API contains functions to mainly the Say Table
+  * and/or functions related to Says.
+  * 
+  * Direct access to this file is not allowed, can only be included
+  * in files and the file that is including it must contain 
+  *	$internal=true;
+  *  
+  * @copyright 2016 GLADE
+  *
+  * @author Probably Lewis
+  *
+  */
 
 if (!isset($internal) && !isset($controller)) //check if its not an internal or controller request
 {
