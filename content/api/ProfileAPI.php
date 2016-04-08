@@ -1,13 +1,39 @@
 <?php
+ /**
+  * SILI Profile API
+  *
+  * Profile API contains functions to mainly the Profile Table
+  * and/or functions related to profiles.
+  * 
+  * Direct access to this file is not allowed, can only be included
+  * in files and the file that is including it must contain 
+  *	$internal=true;
+  *  
+  * @copyright 2016 GLADE
+  *
+  * @author Probably Lewis
+  *
+  */
 
-if (!isset($internal) && !isset($controller)) //check if its not an internal or controller request
+//Check that only approved methods are trying to access this file (Internal Files/API Controller)
+if (!isset($internal) && !isset($controller))
 {
 	//Trying to direct access
 	http_response_code(403);
 	exit;
 }
 
-function CreateProfileID() //Generate a Unique ProfileID
+/**
+ *
+ * Generate a random profileID
+ *
+ * Generates a random profileID checking that it does not 
+ * already exist in the database
+ * 
+ * @return   string The profileID of the user
+ *
+ */
+function GenerateProfileID() //Generate a Unique ProfileID
 {
 	global $db;
 	$profileID = "";
@@ -28,11 +54,20 @@ function CreateProfileID() //Generate a Unique ProfileID
 return $profileID;
 }
 
+/**
+ *
+ * Create profile Record for suer
+ *
+ * @param    int  $userID of the new user 
+ * @param 	 string $firstName The users first name
+ * @param 	 string $lastName The users last name
+ *
+ */
 function CreateProfile($userID, $firstName, $lastName)
 {
 	global $db;
 	//Generate ProfileID
-	$ProfileID = CreateProfileID();
+	$ProfileID = GenerateProfileID();
 
 	//add user to profile table
 	$data = Array(
@@ -44,6 +79,40 @@ function CreateProfile($userID, $firstName, $lastName)
 	$queryResult = $db->insert("Profile", $data);
 }
 
+/**
+ *
+ * Find the profileID of a user based on the userID given
+ *
+ * @param    int $userID of user whos profileID is needed
+ * @return   int The profileID of the user requested
+ *
+ */
+function GetUserProfileID($userID)
+{
+	global $db;
+	$profileID = 0;
+
+	$queryResult = $db->rawQuery("SELECT profileID FROM Profile WHERE userID = ?", Array($userID));
+	$profileID = $queryResult[0]["profileID"];
+
+	return $profileID;
+
+}
+
+/**
+ *
+ * Returns the given users Account Settings
+ *
+ * Returns users Account Settings/Profile for displaying on the 
+ * Account Settings page.
+ * Array Contents: (firstName, lastName, email, userName, userBio, dob, gender,
+ * location, joinDate, profileImage)
+ * 
+ *
+ * @param    int $userID of the current logged in user
+ * @return   array of the users account settings or any errors that occur
+ *
+ */
 function GetUserAccountSettings($userID)
 {
 	global $db, $errorCodes, $profileImagePath, $defaultProfileImg;
@@ -108,6 +177,18 @@ function GetUserAccountSettings($userID)
 	return $result;
 }
 
+/**
+ *
+ * Returns the given users profile
+ *
+ * Returns a users profile based on either the userID given or the username given in
+ * the request 
+ * Array Contents: (firstName, lastName, userName, userBio, location, profileImage)
+ *
+ * @param    int $userID of the current logged in user 
+ * @return   array of the users profile or any errors that occur
+ *
+ */
 function GetUserProfile($userID)
 {
 	global $db, $errorCodes, $profileImagePath, $defaultProfileImg, $request;
@@ -193,7 +274,15 @@ function GetUserProfile($userID)
 	return $result;
 }
 
-//Check if the current User is following the user whos profile we are viewing
+/**
+ *
+ * Returns the status if a user is listening to another user
+ * 
+ * @param    int $userID of the current logged in user 
+ * @param    int $profileUserID of the other user whos profile is being viewed
+ * @return   bool status or null if own profile
+ *
+ */
 function getListeningStatus($userID, $profileUserID)
 {
 	global $db;
@@ -215,6 +304,18 @@ function getListeningStatus($userID, $profileUserID)
 	return $result;
 }
 
+/**
+ *
+ * Returns the number of people who are listening/audience of a user
+ * 
+ * Calcualtes the Number of people who listen/listen to a paticular user
+ * based on the type given
+ *
+ * @param    int $userID of the user whos count is needed 
+ * @param    string $type of count required listening/audience
+ * @return   int number of people who listening/audience|null if wrong/null type
+ *
+ */
 function getCount($userID, $type)
 {
 	global $db;
@@ -227,7 +328,6 @@ function getCount($userID, $type)
 	{
 		$countQuery = "SELECT count(*) AS count FROM Listeners WHERE userID = ?";
 	}
-
 	else
 	{
 		return null;
@@ -239,6 +339,16 @@ function getCount($userID, $type)
 	return $count;
 }
 
+/**
+ *
+ * Returns an array of Users based on the 
+ * 
+ * Searches the Profile table for users whos firstName/lastName/userName 
+ * are like the request given.
+ *
+ * @return   array of users found
+ *
+ */
 function UserSearch()
 {
 	global $db, $errorCodes, $profileImagePath, $defaultProfileImg, $request;
@@ -288,6 +398,17 @@ function UserSearch()
 	return $result;
 }
 
+/**
+ *
+ * Start Listening to a user
+ * 
+ * Creates a record to listen to another user, the userID of the person to listen to
+ * is given in the request.
+ *
+ * @param    int $userID of the currentUser
+ * @return   arrray result if it was successful or failed
+ *
+ */
 function ListenToUser($userID)
 {
 	global $db, $errorCodes, $request;
@@ -358,6 +479,17 @@ function ListenToUser($userID)
 	return $result;
 }
 
+/**
+ *
+ * Stop Listening to a user
+ * 
+ * Deletes record to listen to another user, the userID of the person to listen to
+ * is given in the request.
+ *
+ * @param    int $userID of the currentUser
+ * @return   arrray result if it was successful or failed
+ *
+ */
 function StopListenToUser($userID)
 {
 	global $db, $errorCodes, $request;
@@ -424,6 +556,16 @@ function StopListenToUser($userID)
 	return $result;
 }
 
+/**
+ *
+ * Returns the people who the user currently listens to
+ * 
+ * Returns an array of users who listen to the userID that was provided
+ *
+ * @param    int $userID of the user whos listners are wanted
+ * @return   arrray of users who listen to the requested user
+ *
+ */
 function GetListeners($userID)
 {
 	global $db, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
@@ -487,6 +629,16 @@ function GetListeners($userID)
 	return $result;
 }
 
+/**
+ *
+ * Returns the people who currenly listen to a user
+ * 
+ * Returns an array of users who listen to the userID that was provided
+ *
+ * @param    int $userID of the user whos listners are wanted
+ * @return   arrray of users who listen to the requested user
+ *
+ */
 function GetAudience($userID)
 {
 	global $db, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
@@ -549,6 +701,16 @@ function GetAudience($userID)
 	return $result;
 }
 
+/**
+ *
+ * Update a Users Core Profile
+ * 
+ * Updates the users core profile (firstName, lastName, userName, dob, gender,)
+ *
+ * @param    int $userID of the current User
+ * @return   arrray arrray result if it was successful or failed
+ *
+ */
 function UpdateProfile($userID)
 {
 	global $db, $errorCodes;
@@ -641,6 +803,18 @@ function UpdateProfile($userID)
 	return $result;
 }
 
+/**
+ *
+ * Change a users password
+ * 
+ * Updates the users password (currentPassword, newPassword, confirmNewPassword)
+ * ensuring that the new passsword meets the complexty requirments and matches the
+ * confirmation.
+ *
+ * @param    int $userID of the current User
+ * @return   arrray arrray result if it was successful or failed
+ *
+ */
 function UpdatePassword($userID)
 {
 	global $db, $errorCodes;
@@ -737,6 +911,16 @@ function UpdatePassword($userID)
 	return $result;
 }
 
+/**
+ *
+ * Update a users bio
+ * 
+ * Updates the users bio (userBio)
+ *
+ * @param    int $userID of the current User
+ * @return   arrray arrray result if it was successful or failed
+ *
+ */
 function UpdateBio($userID)
 {
 	global $db, $errorCodes;
@@ -781,6 +965,18 @@ function UpdateBio($userID)
 	return $result;
 }
 
+/**
+ *
+ * Change a users email
+ * 
+ * Updates the users email (currentPassword, newEmail, confirmNewEmail)
+ * ensuring that it is not currently registed and the users password 
+ * matches.
+ *
+ * @param    int $userID of the current User
+ * @return   arrray arrray result if it was successful or failed
+ *
+ */
 function UpdateEmail($userID)
 {
 	global $db, $errorCodes;
