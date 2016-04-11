@@ -290,6 +290,7 @@ function UserRegister()
 			}
 		}
 	}
+	
 	if (!isset($_POST['firstName']) || strlen($_POST['firstName']) == 0) //Check if the first name has been submitted
 	{
 		array_push($errors, $errorCodes["R008"]);
@@ -298,7 +299,8 @@ function UserRegister()
 	{
 		array_push($errors, $errorCodes["R009"]);
 	}
-		
+	
+	//Password Validation
 	if (isset($_POST['password']) && strlen($_POST['password']) > 0) //check if the password has been submitted
 	{
 		$password = $_POST['password'];
@@ -329,9 +331,26 @@ function UserRegister()
 		array_push($errors, $errorCodes["R013"]);
 	}
 	
+	//User Name Validation
+	if (!isset($_POST['userName']) || strlen($_POST['userName']) == 0) //Check if the first name has been submitted
+	{
+		array_push($errors, $errorCodes["R014"]);
+	}
+	else
+	{
+		$userName = $_POST['userName'];
+		
+		$userNameCheck = "^([a-zA-Z])[a-zA-Z_-]*[\w_-]*[\S]$|^([a-zA-Z])[0-9_-]*[\S]$|^[a-zA-Z]*[\S]{5,20}$";
+		if (!preg_match("/$userNameCheck/", $_POST['userName'])) //check it meets the complexity requirements set above
+		{
+			array_push($errors, $errorCodes["R015"]);
+		}
+	}
+	
 	//Process
 	if (count($errors) == 0) //If no errors add the user to the system
 	{
+		$userName = filter_var($_POST['userName'], FILTER_SANITIZE_STRING);
 		$firstName = filter_var($_POST['firstName'], FILTER_SANITIZE_STRING);
 		$lastName = filter_var($_POST['lastName'], FILTER_SANITIZE_STRING);
 		
@@ -350,7 +369,7 @@ function UserRegister()
 		$userID = $db->insert ("UserLogin", $data);	
 		
 		//Create Profile
-		CreateProfile($userID, $firstName, $lastName);
+		CreateProfile($userID, $firstName, $lastName, $userName);
 		
 		//Log the user in 
 		$_SESSION['userID'] = $userID;	
