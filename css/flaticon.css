@@ -37,7 +37,8 @@ font-style: normal;
 .flaticon-listen:before { content: "\f107"; }
 .flaticon-listening:before { content: "\f108"; }
 .flaticon-message:before { content: "\f109"; }
-.flaticon-nolisten:before { content: "\f10a"; }
-.flaticon-notification:before { content: "\f10b"; }
-.flaticon-resay:before { content: "\f10c"; }
-.flaticon-unfavorite:before { content: "\f10d"; }
+.flaticon-more:before { content: "\f10a"; }
+.flaticon-nolisten:before { content: "\f10b"; }
+.flaticon-notification:before { content: "\f10c"; }
+.flaticon-resay:before { content: "\f10d"; }
+.flaticon-unfavorite:before { content: "\f10e"; }
