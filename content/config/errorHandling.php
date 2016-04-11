@@ -131,6 +131,16 @@ $errorCodes ["R013"] = [
 		"field" => "password",
 		"message" => "Password is empty", 
 		];
+$errorCodes ["R014"] = [
+		"code" => "R014",
+		"field" => "userName",
+		"message" => "User Name is empty", 
+		];
+$errorCodes ["R015"] = [
+		"code" => "R015",
+		"field" => "userName",
+		"message" => "User Name does not meet the complexity requirements", 
+		];
 		
 // SayIt error codes/messages
 $errorCodes ["S002"] = [
