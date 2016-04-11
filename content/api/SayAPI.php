@@ -22,6 +22,27 @@ if (!isset($internal) && !isset($controller)) //check if its not an internal or 
 	exit;
 }
 
+function GenerateSayID() //Generate a Unique SayID
+{
+	global $db;
+	$sayID = "";
+
+	//Generate ProfileID
+	do {
+	  	$bytes = openssl_random_pseudo_bytes(15, $cstrong);
+	   	$hex = bin2hex($bytes);
+	   	
+		$queryResult = $db->rawQuery("SELECT sayID FROM Says WHERE sayID = ?", Array($hex));
+	   	//Check the generated id doesnt already exist
+		if (count($queryResult) == 0)
+		{
+			$sayID = $hex;
+		}
+	} while ($sayID == "");
+	
+return $sayID;
+}
+
 function SayIt($profileID) //Adds A Say
 {
 	global $db, $errorCodes;
@@ -48,13 +69,15 @@ function SayIt($profileID) //Adds A Say
 		else
 		{
 			$sayContent = htmlspecialchars($_POST['sayBox']);
+			$sayID = GenerateSayID();
 
 			$data = Array(
+				"sayID" => $sayID,
 				"profileID" => $profileID,
                	"message" => $sayContent,
                	"timePosted" => date("Y-m-d H:i:s")
 			);
-			$sayID = $db->insert("Says", $data);
+			$db->insert("Says", $data);
 
 			$say = FetchSay($sayID);
 		}
@@ -112,12 +135,12 @@ function FetchSay($sayID, $justMe = false, $requestedUserID = 0) //Fetches the S
 	global $db, $profileImagePath, $defaultProfileImg, $profileID;
 	$say = array();
 
-	$queryResult = $db->rawQuery("SELECT LPAD(sayID, 10, '0') as sayIDFill, timePosted, message, profileImage, firstName, lastName, userName, Says.profileID as postProfileID FROM Says INNER JOIN Profile ON Says.profileID=Profile.profileID WHERE sayID = ?", Array($sayID));
+	$queryResult = $db->rawQuery("SELECT sayID, timePosted, message, profileImage, firstName, lastName, userName, Says.profileID as postProfileID FROM Says INNER JOIN Profile ON Says.profileID=Profile.profileID WHERE sayID = ?", Array($sayID));
 		
 	if (count($queryResult) == 1)
 	{
 
-		$sayIDFill = $queryResult[0]["sayIDFill"];
+		$sayID = $queryResult[0]["sayID"];
 		$timePosted = $queryResult[0]["timePosted"];
 		$message = $queryResult[0]["message"];
 		$profileImage = $queryResult[0]["profileImage"];
@@ -134,7 +157,7 @@ function FetchSay($sayID, $justMe = false, $requestedUserID = 0) //Fetches the S
 		$ownSay = GetOwnSayStatus($sayID, $profileID);
 
 		$say = [
-		"sayID" => str_replace("=", "", base64_encode($sayIDFill)),
+		"sayID" => $sayID,
 		"timePosted" => strtotime($timePosted) * 1000,
 		"message" => $message,
 		"profileImage" => $profileImagePath . $profileImage,
@@ -336,7 +359,7 @@ function CommentSayIt($profileID)
 	
 	if (count($request) >= 3)
 	{
-		$sayID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
+		$sayID = filter_var($request[2], FILTER_SANITIZE_STRING);
 	}
 	else
 	{
@@ -404,7 +427,7 @@ function GetSay($profileID)
 	
 	if (count($request) >= 3)
 	{
-		$sayID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
+		$sayID = filter_var($request[2], FILTER_SANITIZE_STRING);
 	}
 	else
 	{
@@ -458,7 +481,7 @@ function GetComments($profileID)
 	
 	if (count($request) >= 3)
 	{
-		$sayID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
+		$sayID = filter_var($request[2], FILTER_SANITIZE_STRING);
 	}
 	else
 	{
@@ -499,7 +522,7 @@ function SayActivity($profileID, $action)
 		
 	if (count($request) >= 3)
 	{
-		$sayID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
+		$sayID = filter_var($request[2], FILTER_SANITIZE_STRING);
 		if ($action == "Re-Say" && GetOwnSayStatus($sayID, $profileID))
 		{
 			array_push($errors, $errorCodes["G000"]);	
