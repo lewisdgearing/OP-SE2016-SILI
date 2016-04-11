@@ -63,7 +63,7 @@ return $profileID;
  * @param 	 string $lastName The users last name
  *
  */
-function CreateProfile($userID, $firstName, $lastName)
+function CreateProfile($userID, $firstName, $lastName, $userName)
 {
 	global $db;
 	//Generate ProfileID
@@ -74,7 +74,8 @@ function CreateProfile($userID, $firstName, $lastName)
 			"profileID" => $profileID,
             "userID" => $userID,
             "firstName" => $firstName,
-			"lastName" => $lastName
+			"lastName" => $lastName,
+			"userName" => $userName
 	);
 	$queryResult = $db->insert("Profile", $data);
 }
