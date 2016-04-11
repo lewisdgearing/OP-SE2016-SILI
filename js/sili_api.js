@@ -312,7 +312,7 @@ function requestUserProfile(reqUserName) {
 			$(".profile-userbio").text(data.userProfile["userBio"]);
 			$(".profile-listens").text(numeral(data.userProfile["listensTo"]).format('0 a'));
 			$(".profile-audience").text(numeral(data.userProfile["audience"]).format('0 a')); 
-			$(".profile").data("userid", data.userProfile["userID"]);
+			$(".profile").data("userid", data.userProfile["profileID"]);
 			$(".profile").data("username", data.userProfile["userName"]);
 			$(".listenButton").data("listening", data.userProfile["listening"]);
 			if(data.userProfile["listening"] === true) //listens to user

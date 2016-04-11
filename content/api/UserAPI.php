@@ -136,15 +136,15 @@ function newUserRememberMeCookie($userID, $currentToken = '')
                "rememberMeToken" => $randomToken,
                "loginAgent" => $_SERVER['HTTP_USER_AGENT'],
 			   "loginIP" =>  $_SERVER['REMOTE_ADDR'],
-			   "loginDatetime" => now(),
-			   "lastVisit" => now()
+			   "loginDatetime" => date("Y-m-d H:i:s"),
+			   "lastVisit" => date("Y-m-d H:i:s")
 		);
 		$db->insert ("UserSessions", $data);
 	}
 	else {
 		$db->where ("userID = ? AND rememberMeToken = ?", Array($userID, $currentToken));
 		$data = Array ("rememberMeToken" => $randomToken,
-               "lastVisit" => now(),
+               "lastVisit" => date("Y-m-d H:i:s"),
 			   "lastVisitAgent" => $_SERVER['HTTP_USER_AGENT']
 		);
 		$db->update ("UserSessions", $data);
@@ -177,9 +177,6 @@ function CheckLogin()
 	global $db, $errorCodes, $profileImagePath, $defaultProfileImg;
 	$result = array();
 	$errors = array();
-
-	//Path for profile Images
-	$profileImagePath = "content/profilePics/";
 
 	//Pre Requirments
 	if ($db->ping() !== TRUE) 

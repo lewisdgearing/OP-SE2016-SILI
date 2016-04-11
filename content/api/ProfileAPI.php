@@ -67,7 +67,7 @@ function CreateProfile($userID, $firstName, $lastName)
 {
 	global $db;
 	//Generate ProfileID
-	$ProfileID = GenerateProfileID();
+	$profileID = GenerateProfileID();
 
 	//add user to profile table
 	$data = Array(
@@ -91,12 +91,31 @@ function GetUserProfileID($userID)
 {
 	global $db;
 	$profileID = 0;
-
-	$queryResult = $db->rawQuery("SELECT profileID FROM Profile WHERE userID = ?", Array($userID));
-	$profileID = $queryResult[0]["profileID"];
+	if ($userID != 0)
+	{
+		$queryResult = $db->rawQuery("SELECT profileID FROM Profile WHERE userID = ?", Array($userID));
+		$profileID = $queryResult[0]["profileID"];
+	}
 
 	return $profileID;
+}
 
+/**
+ *
+ * Find the userName of a user based on the profileID given
+ *
+ * @param    int $profileID of user whos userName is needed
+ * @return   string The userName of the user requested
+ *
+ */
+function GetUserName($profileID)
+{
+	global $db;
+	$userName = "";
+	$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE profileID = ?", Array($profileID));
+	$userName = $queryResult[0]["userName"];
+
+	return $userName;
 }
 
 /**
@@ -109,11 +128,11 @@ function GetUserProfileID($userID)
  * location, joinDate, profileImage)
  * 
  *
- * @param    int $userID of the current logged in user
+ * @param    int $profileID of the current logged in user
  * @return   array of the users account settings or any errors that occur
  *
  */
-function GetUserAccountSettings($userID)
+function GetUserAccountSettings($profileID)
 {
 	global $db, $errorCodes, $profileImagePath, $defaultProfileImg;
 	
@@ -124,13 +143,13 @@ function GetUserAccountSettings($userID)
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
-	
-	if ($userID == 0)
+
+	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 	else {
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userEmail, userName, userBio, dob, gender, location, joinDate, profileImage FROM Profile INNER JOIN UserLogin ON UserLogin.userID=Profile.userID WHERE Profile.userID = ?", Array($userID));
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userEmail, userName, userBio, dob, gender, location, joinDate, profileImage FROM Profile INNER JOIN UserLogin ON UserLogin.userID=Profile.userID WHERE Profile.profileID = ?", Array($profileID));
 		if (count($queryResult) == 1)
 		{
 			$firstName = $queryResult[0]["firstName"];
@@ -181,15 +200,15 @@ function GetUserAccountSettings($userID)
  *
  * Returns the given users profile
  *
- * Returns a users profile based on either the userID given or the username given in
+ * Returns a users profile based on either the profileID given or the username given in
  * the request 
  * Array Contents: (firstName, lastName, userName, userBio, location, profileImage)
  *
- * @param    int $userID of the current logged in user 
+ * @param    int $profileID of the current logged in user 
  * @return   array of the users profile or any errors that occur
  *
  */
-function GetUserProfile($userID)
+function GetUserProfile($profileID)
 {
 	global $db, $errorCodes, $profileImagePath, $defaultProfileImg, $request;
 	
@@ -200,19 +219,13 @@ function GetUserProfile($userID)
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
-	
-	if ($userID == 0)
+
+	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 
-	$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userID = ?", Array($userID));
-
-	if (count($queryResult) == 1)
-	{
-		$requestedUserName = $queryResult[0]["userName"];
-	}
-	
+	$requestedUserName = GetUserName($profileID);
 
 	if (count($request) >= 3)
 	{
@@ -227,11 +240,11 @@ function GetUserProfile($userID)
 		return null;
 	}
 
-	$queryResult = $db->rawQuery("SELECT userID, firstName, lastName, userName, userBio, location, profileImage FROM Profile WHERE userName = ?", Array($requestedUserName));
+	$queryResult = $db->rawQuery("SELECT profileID, firstName, lastName, userName, userBio, location, profileImage FROM Profile WHERE userName = ?", Array($requestedUserName));
 
 	if (count($queryResult) == 1)
 	{
-		$requestedUserID = $queryResult[0]["userID"];
+		$requestedProfileID = $queryResult[0]["profileID"];
 		$firstName = $queryResult[0]["firstName"];
 		$lastName = $queryResult[0]["lastName"];
 		$userName = $queryResult[0]["userName"];
@@ -246,21 +259,20 @@ function GetUserProfile($userID)
 		}
 		
 		$profile = [
-		"userID" => str_replace("=", "", base64_encode(str_pad($requestedUserID, 10, '0', STR_PAD_LEFT))),
+		"profileID" => $requestedProfileID,
 		"firstName" => $firstName,
 		"lastName" => $lastName,
 		"userName" => $userName,
 		"userBio" =>  $userBio,
 		"location" =>  $location,
 		"profileImage" => $profileImagePath . $profileImage,
-		"listensTo" => getCount($requestedUserID, "listening"),
-		"audience" => getCount($requestedUserID, "audience"),
-		"listening" => getListeningStatus($userID, $requestedUserID),
+		"listensTo" => getCount($requestedProfileID, "listening"),
+		"audience" => getCount($requestedProfileID, "audience"),
+		"listening" => getListeningStatus($profileID, $requestedProfileID),
 		];
 		
 		
 	}
-	
 	
 	if (count($errors) == 0) //If no errors user is logged in
 	{
@@ -278,24 +290,24 @@ function GetUserProfile($userID)
  *
  * Returns the status if a user is listening to another user
  * 
- * @param    int $userID of the current logged in user 
- * @param    int $profileUserID of the other user whos profile is being viewed
+ * @param    int $profileID of the current logged in user 
+ * @param    int $usersProfileID of the other user whos profile is being viewed
  * @return   bool status or null if own profile
  *
  */
-function getListeningStatus($userID, $profileUserID)
+function getListeningStatus($profileID, $usersProfileID)
 {
 	global $db;
 
 	//check its not themself they are viewing
-	if ($userID == $profileUserID)
+	if ($profileID == $usersProfileID)
 	{
 		return null;
 	}
 
 	$result = false;
 
-	$queryResult = $db->rawQuery("SELECT userID FROM Listeners WHERE userID = ? AND listenerUserID = ?", Array($userID, $profileUserID));
+	$queryResult = $db->rawQuery("SELECT profileID FROM Listeners WHERE profileID = ? AND listenerProfileID = ?", Array($profileID, $usersProfileID));
 	if (count($queryResult) == 1)
 	{
 		$result = true;
@@ -311,29 +323,29 @@ function getListeningStatus($userID, $profileUserID)
  * Calcualtes the Number of people who listen/listen to a paticular user
  * based on the type given
  *
- * @param    int $userID of the user whos count is needed 
+ * @param    int $profileID of the user whos count is needed 
  * @param    string $type of count required listening/audience
  * @return   int number of people who listening/audience|null if wrong/null type
  *
  */
-function getCount($userID, $type)
+function getCount($profileID, $type)
 {
 	global $db;
 
 	if ($type == "audience")
 	{
-		$countQuery = "SELECT count(*) AS count FROM Listeners WHERE listenerUserID = ?";
+		$countQuery = "SELECT count(*) AS count FROM Listeners WHERE listenerProfileID = ?";
 	}
 	elseif ($type == "listening")
 	{
-		$countQuery = "SELECT count(*) AS count FROM Listeners WHERE userID = ?";
+		$countQuery = "SELECT count(*) AS count FROM Listeners WHERE profileID = ?";
 	}
 	else
 	{
 		return null;
 	}
 
-	$queryResult = $db->rawQuery($countQuery, Array($userID));
+	$queryResult = $db->rawQuery($countQuery, Array($profileID));
 	$count = $queryResult[0]["count"];
 
 	return $count;
@@ -402,14 +414,14 @@ function UserSearch()
  *
  * Start Listening to a user
  * 
- * Creates a record to listen to another user, the userID of the person to listen to
+ * Creates a record to listen to another user, the profileID of the person to listen to
  * is given in the request.
  *
- * @param    int $userID of the currentUser
+ * @param    int $profileID of the currentUser
  * @return   arrray result if it was successful or failed
  *
  */
-function ListenToUser($userID)
+function ListenToUser($profileID)
 {
 	global $db, $errorCodes, $request;
 	
@@ -426,8 +438,8 @@ function ListenToUser($userID)
 	
 	if (count($request) >= 3)
 	{
-		$listenerUserID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
-		if ($userID == $listenerUserID) 
+		$listenerProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);
+		if ($profileID == $listenerProfileID) 
 		{
 			array_push($errors, $errorCodes["G000"]);
 		}
@@ -437,25 +449,22 @@ function ListenToUser($userID)
 		array_push($errors, $errorCodes["G000"]);
 	}
 	
-	if ($userID == 0)
+	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 	
 	//Process
 	if (count($errors) == 0) //If theres no errors so far
 	{	
-		
-		$queryResult = $db->rawQuery("SELECT userID, listenerUserID FROM Listeners WHERE userID = ? AND listenerUserID = ?", Array($userID, $listenerUserID));
-		
-
-		if (count($queryResult) == 0)
+		$status = getListeningStatus($profileID, $listenerProfileID);
+		if($status == false)
 		{
 			//Follow User
-
 			$data = Array(
-				"userID" => $userID,
-               	"listenerUserID" => $listenerUserID
+				"profileID" => $profileID,
+               	"listenerProfileID" => $listenerProfileID,
+               	"dateFollowed" => date("Y-m-d H:i:s")
 			);
 			$id = $db->insert("Listeners", $data);
 		}
@@ -486,11 +495,11 @@ function ListenToUser($userID)
  * Deletes record to listen to another user, the userID of the person to listen to
  * is given in the request.
  *
- * @param    int $userID of the currentUser
+ * @param    int $profileID of the currentUser
  * @return   arrray result if it was successful or failed
  *
  */
-function StopListenToUser($userID)
+function StopListenToUser($profileID)
 {
 	global $db, $errorCodes, $request;
 	
@@ -507,8 +516,8 @@ function StopListenToUser($userID)
 	
 	if (count($request) >= 3)
 	{
-		$listenerUserID = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
-		if ($userID == $listenerUserID) 
+		$listenerProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);
+		if ($profileID == $listenerProfileID) 
 		{
 			array_push($errors, $errorCodes["G000"]);
 		}
@@ -518,23 +527,20 @@ function StopListenToUser($userID)
 		array_push($errors, $errorCodes["G000"]);
 	}
 	
-	if ($userID == 0)
+	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 	
 	//Process
 	if (count($errors) == 0) //If theres no errors so far
 	{	
-		
-		$queryResult = $db->rawQuery("SELECT userID, listenerUserID FROM Listeners WHERE userID = ? AND listenerUserID = ?", Array($userID, $listenerUserID));
-		
-
-		if (count($queryResult) == 1)
+		$status = getListeningStatus($profileID, $listenerProfileID);
+		if($status == true)
 		{
 		
-			$db->where("userID", $userID);
-			$db->where("listenerUserID", $listenerUserID);
+			$db->where("profileID", $profileID);
+			$db->where("listenerProfileID", $listenerProfileID);
 			$db->delete("Listeners");
 
 		}
@@ -560,13 +566,13 @@ function StopListenToUser($userID)
  *
  * Returns the people who the user currently listens to
  * 
- * Returns an array of users who listen to the userID that was provided
+ * Returns an array of users who listen to the profileID that was provided
  *
- * @param    int $userID of the user whos listners are wanted
+ * @param    int $profileID of the user whos listners are wanted
  * @return   arrray of users who listen to the requested user
  *
  */
-function GetListeners($userID)
+function GetListeners($profileID)
 {
 	global $db, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
 	
@@ -581,15 +587,15 @@ function GetListeners($userID)
 	
 	$listeners = array();
 	
-	if ($userID == 0)
+	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 	
 	//Process
 	if (count($errors) == 0) //If theres no errors so far
 	{			
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userID IN (SELECT listenerUserID FROM Listeners WHERE userID = ?) LIMIT 10", Array($userID));
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT listenerprofileID FROM Listeners WHERE profileID = ?) LIMIT 10", Array($profileID));
 		if (count($queryResult) > 0)
 		{
 			foreach ($queryResult as $user) 
@@ -633,13 +639,13 @@ function GetListeners($userID)
  *
  * Returns the people who currenly listen to a user
  * 
- * Returns an array of users who listen to the userID that was provided
+ * Returns an array of users who listen to the profileID that was provided
  *
- * @param    int $userID of the user whos listners are wanted
+ * @param    int $profileID of the user whos listners are wanted
  * @return   arrray of users who listen to the requested user
  *
  */
-function GetAudience($userID)
+function GetAudience($profileID)
 {
 	global $db, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
 	
@@ -654,15 +660,15 @@ function GetAudience($userID)
 	
 	$audienceMembers = array();
 	
-	if ($userID == 0)
+	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 	
 	//Process
 	if (count($errors) == 0) //If theres no errors so far
 	{	
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userID IN (SELECT userID FROM Listeners WHERE listenerUserID = ?) LIMIT 10", Array($userID));
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT profileID FROM Listeners WHERE listenerprofileID = ?) LIMIT 10", Array($profileID));
 		if (count($queryResult) > 0)
 		{
 			foreach ($queryResult as $user) 
@@ -711,7 +717,7 @@ function GetAudience($userID)
  * @return   arrray arrray result if it was successful or failed
  *
  */
-function UpdateProfile($userID)
+function UpdateProfile($profileID)
 {
 	global $db, $errorCodes;
 	
@@ -723,7 +729,7 @@ function UpdateProfile($userID)
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if ($userID == 0)
+	if ($profileID === 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
@@ -772,7 +778,7 @@ function UpdateProfile($userID)
 		$dob = date("Y-m-d", strtotime($dob));
 		$gender = substr($_POST['gender'], 0, 1);
 
-		$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userName = ? AND userID != ?", Array($userName, $userID));
+		$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userName = ? AND profileID != ?", Array($userName, $profileID));
 		if (count($queryResult) == 0)
 		{
 			$data = Array(
@@ -783,7 +789,7 @@ function UpdateProfile($userID)
 			    "gender" => $gender,
 
 			);
-			$db->where("userID", $userID);
+			$db->where("profileID", $profileID);
 			$db->update("Profile", $data);
 		} 
 		else
@@ -811,11 +817,12 @@ function UpdateProfile($userID)
  * ensuring that the new passsword meets the complexty requirments and matches the
  * confirmation.
  *
+ * @param    int $profileID of the current Profile
  * @param    int $userID of the current User
  * @return   arrray arrray result if it was successful or failed
  *
  */
-function UpdatePassword($userID)
+function UpdatePassword($profileID, $userID)
 {
 	global $db, $errorCodes;
 	
@@ -921,7 +928,7 @@ function UpdatePassword($userID)
  * @return   arrray arrray result if it was successful or failed
  *
  */
-function UpdateBio($userID)
+function UpdateBio($profileID)
 {
 	global $db, $errorCodes;
 	
@@ -933,7 +940,7 @@ function UpdateBio($userID)
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if ($userID == 0)
+	if ($profileID === 0)
 	{
 		array_push($errors, $errorCodes["G001"]);
 	}
@@ -950,7 +957,7 @@ function UpdateBio($userID)
 		$data = Array(
 			"userBio" => $userBio,
 		);
-		$db->where("userID", $userID);
+		$db->where("profileID", $profileID);
 		$db->update("Profile", $data);
 	}
 	
@@ -973,11 +980,12 @@ function UpdateBio($userID)
  * ensuring that it is not currently registed and the users password 
  * matches.
  *
+ * @param    int $profileID of the current Profile
  * @param    int $userID of the current User
  * @return   arrray arrray result if it was successful or failed
  *
  */
-function UpdateEmail($userID)
+function UpdateEmail($profileID, $userID)
 {
 	global $db, $errorCodes;
 	

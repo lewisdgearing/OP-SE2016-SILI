@@ -8,9 +8,15 @@ $errorCodes["G000"] = [
 	];
 	
 $errorCodes["G001"] = [
-	"code" => "G000",
+	"code" => "G001",
 	"field" => "userID",
 	"message" => "No UserID provided",
+	];
+	
+$errorCodes["G002"] = [
+	"code" => "G002",
+	"field" => "profileID",
+	"message" => "profileID not found",
 	];
 	
 //Generic MySQL codes/Messages

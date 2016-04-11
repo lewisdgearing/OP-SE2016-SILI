@@ -24,9 +24,11 @@ if (is_ajax())
 
 	//Get UserID from session
 	$userID = 0;
+	$profileID = 0;
 	if(isset($_SESSION['userID']))
 	{
 		$userID = $_SESSION['userID'];
+		$profileID = GetUserProfileID($userID);
 	}
 
 	//Check if a request for an API was actually made
@@ -44,7 +46,7 @@ if (is_ajax())
 			{
 				if (array_key_exists($_SERVER['REQUEST_METHOD'], $reqArray[$request[0]][$request[1]])) 
 				{
-					$result = $reqArray[$request[0]][$request[1]][$_SERVER['REQUEST_METHOD']]($userID);
+					$result = $reqArray[$request[0]][$request[1]][$_SERVER['REQUEST_METHOD']]($profileID, $userID);
 					
 					//Output Request json result
 					header('Content-Type: application/json');
