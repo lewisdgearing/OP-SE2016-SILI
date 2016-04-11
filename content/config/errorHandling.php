@@ -141,6 +141,11 @@ $errorCodes ["R015"] = [
 		"field" => "userName",
 		"message" => "User Name does not meet the complexity requirements", 
 		];
+$errorCodes ["R016"] = [
+	"code" => "R016",
+	"field" => "",
+	"message" => "User Name already Exists", 
+	];
 		
 // SayIt error codes/messages
 $errorCodes ["S002"] = [
@@ -170,13 +175,13 @@ $errorCodes ["P002"] = [
 $errorCodes ["P003"] = [
 	"code" => "P003",
 	"field" => "userName",
-	"message" => "UserName is empty", 
+	"message" => "User Name is empty", 
 	];
 	
 $errorCodes ["P004"] = [
 	"code" => "P004",
 	"field" => "userName",
-	"message" => "UserName does not meet requirements", 
+	"message" => "User Name does not meet requirements", 
 	];
 	
 $errorCodes ["P005"] = [
@@ -194,7 +199,7 @@ $errorCodes ["P006"] = [
 $errorCodes ["P007"] = [
 	"code" => "P007",
 	"field" => "",
-	"message" => "UserName already Exists", 
+	"message" => "User Name already Exists", 
 	];
 				
 $errorCodes ["P008"] = [
