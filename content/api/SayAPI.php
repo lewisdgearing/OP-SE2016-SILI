@@ -408,7 +408,7 @@ function GetActivity($profileID, $sayID, $action, $justMe = false, $requestedPro
 	if (count($queryResult) >= 1)
 	{
 	
-		$activityUserID = $queryResult[0]["userID"];
+		$activityProfileID = $queryResult[0]["profileID"];
 	
 		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID = ?" , Array($activityProfileID));
 	
