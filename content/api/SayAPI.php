@@ -472,22 +472,25 @@ function CommentSayIt($profileID)
 		else
 		{
 			$sayContent = htmlspecialchars($_POST['commentBox']);
-			$commentID = $GenerateSayID();
+			$commentID = GenerateSayID();
 
 
 			$data = Array(
 							"sayID" => $commentID, //This Say is a comment so therefore this is the comment ID
 							"profileID" => $profileID,
-			               	"message" => $sayContent
+			               	"message" => $sayContent,
+			               	"timePosted" => date("Y-m-d H:i:s")
 						);
 
-			$db->insert("Says", $data); 
+			$db->insert("Says", $data);
+
 			$data = Array(
 							"sayID" => $sayID, // THIS is posted with the form and dealt with higher up
 							"commentID" => $commentID
 						);
 
 			$db->insert("Comments", $data);
+
 			$say = FetchSay($commentID);
 		}
 	}
