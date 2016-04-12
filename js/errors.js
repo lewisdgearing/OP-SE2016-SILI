@@ -11,6 +11,9 @@ errors["R010"] = {"field":"registerPassword", "errorMessage":"Your password does
 errors["R011"] = {"field":"registerConfirmPassword", "errorMessage":"Confirm password does not match password"};
 errors["R012"] = {"field":"registerConfirmPassword", "errorMessage":"Please confirm your password"};
 errors["R013"] = {"field":"registerPassword", "errorMessage":"Please enter your password"};
+errors["R014"] = {"field":"registerUserName", "errorMessage":"Please enter a UserName"};
+errors["R015"] = {"field":"registerUserName", "errorMessage":"Your UserName does not meet the requirements"};
+errors["R016"] = {"field":"registerUserName", "errorMessage":"The UserName has already been used, please choose another"};
 //Login errors
 errors["L002"] = {"field":"loginEmail", "errorMessage":"Please enter your email address"};
 errors["L003"] = {"field":"loginEmail", "errorMessage":"Please enter a valid email address"};
