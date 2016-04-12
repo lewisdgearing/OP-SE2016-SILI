@@ -743,4 +743,71 @@ function ReSay($profileID)
 {
 	return SayActivity($profileID, "Re-Say");	
 }
+
+/**
+ *
+ * Deletes a Say
+ *
+ * @param    string $profileID of the current logged in user
+ * @return   array Result of the action
+ *
+ */
+function DeleteSay($profileID)
+{
+	global $db, $errorCodes, $request;
+	
+	$result = array();
+	$errors = array();
+	
+	//Pre Requirments
+	if ($db->ping() !== TRUE) 
+	{
+		array_push($errors, $errorCodes["M001"]);
+	}
+		
+	if (count($request) >= 3)
+	{
+		$sayID = filter_var($request[2], FILTER_SANITIZE_STRING);
+	}
+	else
+	{
+		array_push($errors, $errorCodes["G000"]);
+	}
+	
+	if ($profileID === 0)
+	{
+		array_push($errors, $errorCodes["G001"]);
+	}
+
+	//Process
+	if (count($errors) == 0) //If theres no errors so far
+	{	
+		if (GetOwnSayStatus($sayID, $profileID))
+		{
+			$data = Array(
+			    "deleted" => true,
+				"deletedDate" => date("Y-m-d H:i:s")
+			);
+			$db->where("sayID", $sayID);
+			$db->update("Says", $data);
+		}
+		else
+		{
+			array_push($errors, $errorCodes["G000"]);
+		}
+
+	}
+	
+	if (count($errors) == 0)
+	{
+		$result["message"] = "Say Deleted";
+	}
+	else
+	{
+		$result["errors"] = $errors;
+	}
+	
+	return $result;
+	
+}
 ?>
