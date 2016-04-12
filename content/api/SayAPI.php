@@ -15,19 +15,30 @@
   *
   */
 
-if (!isset($internal) && !isset($controller)) //check if its not an internal or controller request
+//Check that only approved methods are trying to access this file (Internal Files/API Controller)
+if (!isset($internal) && !isset($controller))
 {
 	//Trying to direct access
 	http_response_code(403);
 	exit;
 }
 
-function GenerateSayID() //Generate a Unique SayID
+/**
+ *
+ * Generate a random sayID
+ *
+ * Generates a random sayID checking that it does not 
+ * already exist in the database
+ * 
+ * @return   string The sayID for the Say
+ *
+ */
+function GenerateSayID()
 {
 	global $db;
 	$sayID = "";
 
-	//Generate ProfileID
+	//Generate SayID
 	do {
 	  	$bytes = openssl_random_pseudo_bytes(15, $cstrong);
 	   	$hex = bin2hex($bytes);
@@ -43,6 +54,14 @@ function GenerateSayID() //Generate a Unique SayID
 return $sayID;
 }
 
+/**
+ *
+ * Create record for say
+ *
+ * @param    int  $profileID of the current logged in user
+ * @return   array Containing the say or any errors that have occurred
+ *
+ */
 function SayIt($profileID) //Adds A Say
 {
 	global $db, $errorCodes;
@@ -99,6 +118,17 @@ function SayIt($profileID) //Adds A Say
 	return $result;
 }
 
+/**
+ *
+ * Return all the says for the current user
+ *
+ * Returns all the says or resays from users the current user follows along with 
+ * the users own says
+ *
+ * @param    int  $profileID of the current logged in user
+ * @return   array Containing the says or any errors that have occurred
+ *
+ */
 function GetSays($profileID) //Returns all the says based of the people listened to by the logged in user
 {	
 	global $db, $errorCodes;
@@ -113,7 +143,7 @@ function GetSays($profileID) //Returns all the says based of the people listened
 	
 	if ($profileID !== 0) 
 	{
-		$saysQuery = "SELECT sayID FROM Says WHERE (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments) ORDER BY timePosted DESC";	
+		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments) ORDER BY timePosted DESC";	
 		
 		$queryResult = $db->rawQuery($saysQuery, Array($profileID, $profileID, $profileID));
 		if (count($queryResult) >= 1)
@@ -130,6 +160,17 @@ function GetSays($profileID) //Returns all the says based of the people listened
 	return $result;
 }
 
+/**
+ *
+ * Returns a say
+ *
+ *
+ * @param    int  $profileID of the current logged in user
+ * @param    bool $justMe
+ * @param    int  $requestedUserID 
+ * @return   array Containing the say
+ *
+ */
 function FetchSay($sayID, $justMe = false, $requestedUserID = 0) //Fetches the Say
 {
 	global $db, $profileImagePath, $defaultProfileImg, $profileID;
@@ -179,6 +220,14 @@ function FetchSay($sayID, $justMe = false, $requestedUserID = 0) //Fetches the S
 	return $say;
 }
 
+/**
+ *
+ * Returns the says/resays for current user
+ *
+ * @param    int  $profileID of the current logged in user
+ * @return   array Containing the says or any errors that have occurred
+ *
+ */
 function GetUserSays($profileID) //Get the says of a user
 {
 	global $db, $errorCodes, $request;
@@ -228,7 +277,7 @@ function GetUserSays($profileID) //Get the says of a user
 	
 	if ($requestedProfileID !== 0) 
 	{
-		$saysQuery = "SELECT sayID FROM Says WHERE profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID = ? AND activity = \"Re-Say\") ORDER BY timePosted DESC LIMIT 10";	
+		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID = ? AND activity = \"Re-Say\") ORDER BY timePosted DESC LIMIT 10";	
 		
 		$queryResult = $db->rawQuery($saysQuery , Array($requestedProfileID, $requestedProfileID));
 
@@ -247,6 +296,15 @@ function GetUserSays($profileID) //Get the says of a user
 	return $result;
 }
 
+/**
+ *
+ * Returns the count of the specified activity 
+ *
+ * @param    int  $profileID of the current logged in user
+ * @param    string $action type of action Boo/Re-Say/Applaud
+ * @return   int number of users that have done 
+ *
+ */
 function GetActivityCount($sayID, $action)
 {
 	global $db;
@@ -259,6 +317,15 @@ function GetActivityCount($sayID, $action)
 	return $count;
 }
 
+/**
+ *
+ * Returns if it is the users own say
+ *
+ * @param    string $sayID the say being checked
+ * @param    string $profileID of the current logged in user
+ * @return   bool if it is there own say
+ *
+ */
 function GetOwnSayStatus($sayID, $profileID)
 {
 	global $db;
@@ -277,6 +344,17 @@ function GetOwnSayStatus($sayID, $profileID)
 	
 	return $status;
 }
+
+/**
+ *
+ * Returns if it is the users has done the activity
+ *
+ * @param    string $profileID of the current logged in user
+ * @param    string $sayID the say being checked
+ * @param    string $action type of action Boo/Re-Say/Applaud
+ * @return   bool the staus of the action
+ *
+ */
 function GetActivityStatus($profileID, $sayID, $action)
 {
 	global $db;
@@ -297,6 +375,18 @@ function GetActivityStatus($profileID, $sayID, $action)
 	return $status;
 }
 
+/**
+ *
+ * Returns the 
+ *
+ * @param    string $profileID of the current logged in user
+ * @param    string $sayID the say being checked
+ * @param    string $action type of action Boo/Re-Say/Applaud
+ * @param    bool $justMe
+ * @param    int $requestedProfileID 
+ * @return   
+ *
+ */
 function GetActivity($profileID, $sayID, $action, $justMe = false, $requestedProfileID = 0)
 {
 	global $db, $profileImagePath, $defaultProfileImg;
