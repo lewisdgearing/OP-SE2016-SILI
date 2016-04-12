@@ -25,15 +25,18 @@
 						</div>
 						<div class="row"> 
 							<div class="col-md-2">
-							   <i class="icons applaud flaticon-applaud" data-toggle="tooltip" data-placement="top" title="Applaud"></i><span class="applaud" data-content="applauds"></span>
+							   <i class="icons applaudModal flaticon-applaud" data-toggle="tooltip" data-placement="top" title="Applaud"></i><span class="applaudModal" data-content="applauds"></span>
 							</div> 
 							<div class="col-md-2">
-								<i class="icons reSay flaticon-resay" data-toggle="tooltip" data-placement="top" title="Re-Say"></i><span class="reSay" data-content="resays"></span>
+								<i class="icons reSayModal flaticon-resay" data-toggle="tooltip" data-placement="top" title="Re-Say"></i><span class="reSayModal" data-content="resays"></span>
 							</div> 
 							<div class="col-md-2">
-								<i class="icons boo flaticon-boo" data-toggle="tooltip" data-placement="top" title="Boo"></i><span class="boo" data-content="boos"></span>
+								<i class="icons booModal flaticon-boo" data-toggle="tooltip" data-placement="top" title="Boo"></i><span class="booModal" data-content="boos"></span>
 							</div> 
-							<div class="col-md-6"></div> 
+							<div class="col-md-4"></div> 
+							<div class="col-md-2">
+								<i class="icons deleteModal flaticon-delete" data-toggle="tooltip" data-placement="top" title="Delete"></i><span class="deleteModal" data-content="delete"></span>
+							</div> 
 						</div> 
 					</div>
 				</div>
@@ -58,4 +61,26 @@
 			</div><!-- /.modal-body -->
 		</div><!-- /.modal-content -->
 	</div><!-- /.modal-dialog -->
-</div><!-- /.modal -->	  
+</div><!-- /.modal -->	
+
+<div class="modal" id="confirmDelete" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+	<div class="modal-body">
+     <span>Are you sure you want to delete it?</span> <br>
+	 <div class="row" data-template-bind='[
+     {"attribute": "data-sayID", "value": "sayID"}]'>
+		<div class="col-md-2"></div> 
+		<div class="col-md-4">
+			<button type="button" class="btn confirmDelete" data-dismiss="modal">Yes</button>
+		</div> 
+		<div class="col-md-4">
+			<button type="button" class="btn noDelete" data-dismiss="modal">No</button>		
+		</div> 
+		<div class="col-md-2"></div> 
+	</div> 
+	</div>
+	 
+    </div>
+  </div>
+</div>  

@@ -195,6 +195,10 @@ function assignActionStatus(elem, data) {
 		sayElement.find("i.reSay").addClass("reSayOwn");
 		sayElement.find("i.reSay").removeClass("reSay");
 	}
+	else
+	{
+		sayElement.find("i.deleteModal").remove();
+	}
 }
 
 function fetchSayDetails(sayID){
@@ -619,7 +623,27 @@ $("document").ready(function() {
 		$(this).parent().find("span").html(count);			
 		setActionStatus($(this).parent().find("i"), status);
 		});
-
+		
+	$(document).on('click', '.more', function(){
+		var $el = $(this).parent().parent().parent().parent();
+		var sayID = $el.attr('id');
+		fetchSayDetails(sayID).done(function() {
+			fetchComments(sayID).done(function()
+			{
+				$('#sayDetailsModal').modal('show');
+			});
+		});
+	});
+	$(document).on('click', '.deleteModal', function(){
+		$('#confirmDelete').modal('show');
+	});
+	$(document).on('click', '.confirmDelete', function(){
+		var $el = $(this).parent();
+		var sayID = $el.data('sayID');
+		
+			
+		
+	});
 	$(document).on('click', '.commentPen', function(){
 		var $el = $(this).parent().parent().parent().parent();
 		var sayID = $el.attr('id');
