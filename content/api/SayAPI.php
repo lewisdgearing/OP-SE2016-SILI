@@ -472,13 +472,16 @@ function CommentSayIt($profileID)
 		else
 		{
 			$sayContent = htmlspecialchars($_POST['commentBox']);
-			
+			$commentID = $GenerateSayID();
+
+
 			$data = Array(
+							"sayID" => $commentID, //This Say is a comment so therefore this is the comment ID
 							"profileID" => $profileID,
 			               	"message" => $sayContent
 						);
 
-			$commentID = $db->insert("Says", $data); //This Say is a comment so therefore this is the comment ID
+			$db->insert("Says", $data); 
 			$data = Array(
 							"sayID" => $sayID, // THIS is posted with the form and dealt with higher up
 							"commentID" => $commentID
