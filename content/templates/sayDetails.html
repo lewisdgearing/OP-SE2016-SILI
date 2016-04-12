@@ -63,21 +63,21 @@
 	</div><!-- /.modal-dialog -->
 </div><!-- /.modal -->	
 
-<div class="modal" id="confirmDelete" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+<div class="modal" id="confirmDelete" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static" aria-labelledby="mySmallModalLabel">
   <div class="modal-dialog modal-sm">
     <div class="modal-content">
 	<div class="modal-body">
-     <span>Are you sure you want to delete it?</span> <br>
+     <span>Are you sure you want to delete your Say?</span> <br>
 	 <div class="row" data-template-bind='[
      {"attribute": "data-sayID", "value": "sayID"}]'>
-		<div class="col-md-2"></div> 
-		<div class="col-md-4">
+	 	<div class="col-md-2"></div> 
+		<div class="col-md-2">
 			<button type="button" class="btn confirmDelete" data-dismiss="modal">Yes</button>
-		</div> 
-		<div class="col-md-4">
-			<button type="button" class="btn noDelete" data-dismiss="modal">No</button>		
-		</div> 
+		</div>
 		<div class="col-md-2"></div> 
+		<div class="col-md-2">
+			<button type="button" class="btn noDelete" data-dismiss="modal">No</button>	
+		</div> 
 	</div> 
 	</div>
 	 

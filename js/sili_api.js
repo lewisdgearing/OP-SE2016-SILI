@@ -403,6 +403,15 @@ function listenButton(reqUserID, reqUserName, status) {
 	});
 }
 
+function deleteSay(sayID) {
+	$.ajax({
+		dataType: "json",
+		async: false,
+		url: "API/say/delete/" + sayID,
+		
+	});
+	return false;
+}
 
 function SayAction(sayID, action) {
 	var count, status;
@@ -638,11 +647,15 @@ $("document").ready(function() {
 		$('#confirmDelete').modal('show');
 	});
 	$(document).on('click', '.confirmDelete', function(){
-		var $el = $(this).parent();
-		var sayID = $el.data('sayID');
-		
-			
-		
+		var $el = $(this).parent().parent();
+		var sayID = $el.attr('data-sayID');
+		$('#confirmDelete').modal('hide');
+		$('#sayDetailsModal').modal('hide');
+		$('#' + sayID).remove();
+		$('.sayDetailsModal').empty();
+		$('body').removeClass('modal-open');
+		$('.modal-backdrop').remove();
+		deleteSay(sayID);
 	});
 	$(document).on('click', '.commentPen', function(){
 		var $el = $(this).parent().parent().parent().parent();
