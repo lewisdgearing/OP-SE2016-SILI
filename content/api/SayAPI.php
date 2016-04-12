@@ -166,8 +166,8 @@ function GetSays($profileID) //Returns all the says based of the people listened
  *
  *
  * @param    int  $profileID of the current logged in user
- * @param    bool $justMe
- * @param    int  $requestedUserID 
+ * @param    bool $justMe only return the activity by the requestedProfileID
+ * @param    string $requestedProfileID profileID of the users whos activity on the say 
  * @return   array Containing the say
  *
  */
@@ -377,14 +377,17 @@ function GetActivityStatus($profileID, $sayID, $action)
 
 /**
  *
- * Returns the 
+ * Returns the activity details if any for the requestd say
+ *
+ * If just me is set then only return activity for the given requested profileID, otherwise 
+ * one will randomly be chosen from the users following
  *
  * @param    string $profileID of the current logged in user
  * @param    string $sayID the say being checked
  * @param    string $action type of action Boo/Re-Say/Applaud
- * @param    bool $justMe
- * @param    int $requestedProfileID 
- * @return   
+ * @param    bool $justMe only return the activity by the requestedProfileID
+ * @param    string $requestedProfileID profileID of the users whos activity on the say 
+ * @return   array details of the person if any who did the activity
  *
  */
 function GetActivity($profileID, $sayID, $action, $justMe = false, $requestedProfileID = 0)
@@ -502,6 +505,16 @@ function CommentSayIt($profileID)
 	return $result;
 }
 
+/**
+ *
+ * Returns an individual say
+ *
+ * Based on the say requesed return that say
+ *
+ * @param    string $profileID of the current logged in user
+ * @return   array say details or any errors that occour
+ *
+ */
 function GetSay($profileID)
 {
 	global $db, $errorCodes, $request;
@@ -597,6 +610,17 @@ function GetComments($profileID)
 	return $result;
 }
 
+/**
+ *
+ * Preform an action
+ *
+ * Adds/Removes the action
+ *
+ * @param    string $profileID of the current logged in user
+ * @param    string $action the action being performed (Applaud/Re-Say/Boo)
+ * @return   array Result of the action
+ *
+ */
 function SayActivity($profileID, $action)
 {
 	global $db, $errorCodes, $request;
@@ -690,16 +714,31 @@ function SayActivity($profileID, $action)
 	
 }
 
+/**
+ *
+ * Preform Boo Action
+ *
+ */
 function Boo($profileID)
 {
 	return SayActivity($profileID, "Boo");	
 }
 
+/**
+ *
+ * Preform Applaud Action
+ *
+ */
 function Applaud($profileID)
 {
 	return SayActivity($profileID, "Applaud");	
 }
 
+/**
+ *
+ * Preform Resay Action
+ *
+ */
 function ReSay($profileID)
 {
 	return SayActivity($profileID, "Re-Say");	
