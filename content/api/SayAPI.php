@@ -141,7 +141,7 @@ function GetSays($profileID) //Returns all the says based of the people listened
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if ($profileID !== 0) 
+	if ($profileID !== 0)
 	{
 		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments) ORDER BY timePosted DESC";	
 		
@@ -352,7 +352,7 @@ function GetOwnSayStatus($sayID, $profileID)
  * @param    string $profileID of the current logged in user
  * @param    string $sayID the say being checked
  * @param    string $action type of action Boo/Re-Say/Applaud
- * @return   bool the staus of the action
+ * @return   bool the status of the action
  *
  */
 function GetActivityStatus($profileID, $sayID, $action)
@@ -438,6 +438,14 @@ function GetActivity($profileID, $sayID, $action, $justMe = false, $requestedPro
 	return $activity;
 }
 
+/**
+ *
+ * Create record for comment
+ *
+ * @param    int  $profileID of the current logged in user
+ * @return   array Containing the comment or any errors that have occurred
+ *
+ */
 function CommentSayIt($profileID)
 {
 	global $db, $errorCodes, $request;
@@ -515,7 +523,7 @@ function CommentSayIt($profileID)
  *
  * Returns an individual say
  *
- * Based on the say requesed return that say
+ * Based on the say requested return that say
  *
  * @param    string $profileID of the current logged in user
  * @return   array say details or any errors that occour
@@ -576,6 +584,14 @@ function GetSay($profileID)
 	return $result;
 }
 
+/**
+ *
+ * Returns comments associated to a particular say
+ *
+ * @param    string $profileID of the current logged in user
+ * @return   array comment details or any errors that occour
+ *
+ */
 function GetComments($profileID)
 {
 	global $db, $errorCodes, $request;
@@ -618,7 +634,7 @@ function GetComments($profileID)
 
 /**
  *
- * Preform an action
+ * Perform an action
  *
  * Adds/Removes the action
  *
