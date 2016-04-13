@@ -222,6 +222,7 @@ function fetchSayDetails(sayID){
 			}, { afterInsert: function (elem) {
 						assignActionStatus(elem, data.say);
 			}});
+			$(".sayDetailsModal").loadTemplate("content/templates/activity.html","",{append: true});
 		}
 	});
 }
@@ -645,6 +646,9 @@ $("document").ready(function() {
 	});
 	$(document).on('click', '.deleteModal', function(){
 		$('#confirmDelete').modal('show');
+	});
+	$(document).on('click', '.applaudModalCount, .booModalCount, .reSayModalCount', function(){
+		$('#activityModal').modal('show');
 	});
 	$(document).on('click', '.confirmDelete', function(){
 		var $el = $(this).parent().parent();
