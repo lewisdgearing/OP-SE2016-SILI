@@ -103,6 +103,27 @@ function GetUserProfileID($userID)
 
 /**
  *
+ * Obtain the profileID based on a given userName
+ *
+ * @param    string  $profileName
+ * @return   string $profileID
+ *
+ */
+function GetProfileID($userName)
+{
+	global $db;
+	$profileID = 0;
+	if(strlen($userName != 0))
+	{
+		$queryResult = $db->rawQuery("SELECT profileID FROM Profile WHERE userName = ?", Array($userName));
+		$profileID = $queryResult[0]["profileID"];
+	}
+
+	return $profileID;
+}
+
+/**
+ *
  * Find the userName of a user based on the profileID given
  *
  * @param    int $profileID of user whos userName is needed
