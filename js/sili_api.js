@@ -189,11 +189,16 @@ function assignActionStatus(elem, data) {
 	setActionStatus(sayElement.find("i.applaud"), data["applaudStatus"]);
 	setActionStatus(sayElement.find("i.reSay"), data["resayStatus"]);
 	setActionStatus(sayElement.find("i.boo"), data["booStatus"]);
+	setActionStatus(sayElement.find("i.applaudModal"), data["applaudStatus"]);
+	setActionStatus(sayElement.find("i.reSayModal"), data["resayStatus"]);
+	setActionStatus(sayElement.find("i.booModal"), data["booStatus"]);
 	if(data["ownSay"] === true)
 	{
 		
 		sayElement.find("i.reSay").addClass("reSayOwn");
 		sayElement.find("i.reSay").removeClass("reSay");
+		sayElement.find("i.reSayModal").addClass("reSayOwn");
+		sayElement.find("i.reSayModal").removeClass("reSay");
 	}
 	else
 	{
@@ -222,7 +227,7 @@ function fetchSayDetails(sayID){
 			}, { afterInsert: function (elem) {
 						assignActionStatus(elem, data.say);
 			}});
-			$(".sayDetailsModal").loadTemplate("content/templates/activity.html","",{append: true});
+			
 		}
 	});
 }
@@ -521,6 +526,37 @@ function setActionStatus(element, status)
 	}
 }
 
+function GetActionUser(sayID, action) {
+	$.ajax({
+		dataType: "json",
+		async: false,
+		url: "API/say/" + action + "users/" + sayID,
+		success: function(data) {
+			var actionHeader = action;
+			if (action == "reSay")
+			{
+				actionHeader = "Resaid"
+			} 
+			else if(action == "applaud")
+			{
+				actionHeader = "Applauded"
+			}
+			else
+			{
+				actionHeader = "Booed"
+			}
+			$(".sayDetailsModal").loadTemplate("content/templates/activity.html",
+				{
+					activityHeader:"Users that " + actionHeader,
+				},{append: true});
+			
+		}
+	});
+	
+	return [count, status];
+}
+
+
 getUserDetials().done(function() {
 	if(loggedIn) {
 		$("#profileImage").attr("src", profileImage);
@@ -613,7 +649,18 @@ $("document").ready(function() {
 		$(this).parent().find("span").html(count);			
 		setActionStatus($(this).parent().find("i"), status);	
 	});
-	
+	$(document).on('click', '.applaudModal', function(){		
+		var $el = $(this).parent().parent().parent().parent().parent();
+		var sayID = $el.attr('id');
+		var action = SayAction(sayID, "applaud")
+		var count = action[0];
+		var status = action[1];
+		$(this).parent().parent().find("span.applaudModalCount").html(count);			
+		setActionStatus($(this).parent().find("i"), status);	
+		$("#" + sayID).find("span.applaud").html(count);	
+		setActionStatus($("#" + sayID).find("i.applaud"), status);
+	});
+		
 	$(document).on('click', '.reSay', function(){
 		var $el = $(this).parent().parent().parent().parent();
 		var sayID = $el.attr('id');
@@ -622,6 +669,18 @@ $("document").ready(function() {
 		var status = action[1];
 		$(this).parent().find("span").html(count);			
 		setActionStatus($(this).parent().find("i"), status);
+	});
+	
+	$(document).on('click', '.reSayModal', function(){		
+		var $el = $(this).parent().parent().parent().parent().parent();
+		var sayID = $el.attr('id');
+		var action = SayAction(sayID, "resay")
+		var count = action[0];
+		var status = action[1];
+		$(this).parent().parent().find("span.reSayModalCount").html(count);			
+		setActionStatus($(this).parent().find("i"), status);	
+		$("#" + sayID).find("span.reSay").html(count);	
+		setActionStatus($("#" + sayID).find("i.reSay"), status);
 	});
 	
 	$(document).on('click', '.boo', function(){
@@ -633,6 +692,18 @@ $("document").ready(function() {
 		$(this).parent().find("span").html(count);			
 		setActionStatus($(this).parent().find("i"), status);
 		});
+		
+	$(document).on('click', '.booModal', function(){		
+		var $el = $(this).parent().parent().parent().parent().parent();
+		var sayID = $el.attr('id');
+		var action = SayAction(sayID, "boo");
+		var count = action[0];
+		var status = action[1];
+		$(this).parent().parent().find("span.booModalCount").html(count);			
+		setActionStatus($(this).parent().find("i"), status);	
+		$("#" + sayID).find("span.boo").html(count);	
+		setActionStatus($("#" + sayID).find("i.boo"), status);
+	});	
 		
 	$(document).on('click', '.more', function(){
 		var $el = $(this).parent().parent().parent().parent();
@@ -648,6 +719,8 @@ $("document").ready(function() {
 		$('#confirmDelete').modal('show');
 	});
 	$(document).on('click', '.applaudModalCount, .booModalCount, .reSayModalCount', function(){
+		GetActionUser(sayID, action);
+
 		$('#activityModal').modal('show');
 	});
 	$(document).on('click', '.confirmDelete', function(){

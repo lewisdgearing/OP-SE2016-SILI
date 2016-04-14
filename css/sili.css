@@ -200,7 +200,7 @@ textarea
 	font-size: 30px;
 }
 
-.icons.applaud, .icons.reSay, .icons.boo, .icons.reSayOwn
+.icons.applaud, .icons.reSay, .icons.boo, .icons.reSayOwn, .icons.applaudModal, .icons.booModal, .icons.reSayModal
 {
 	color: #E8E8E8;
 }
