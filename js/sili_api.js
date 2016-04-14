@@ -366,6 +366,7 @@ function requestUserSettings() {
 			$(".acc-profileImage").attr("src", data.userProfile["profileImage"]);
 			$(".acc-userbio").text(data.userProfile["userBio"]);
 			$(".acc-gender").text(data.userProfile["gender"]);
+			$(".acc-dob").text(data.userProfile["dob"]);
 			$(".acc-location").text(data.userProfile["location"]);
 			$(".acc-joined").text(moment(data.userProfile["joinDate"]).format('Do MMMM YYYY'));
 
@@ -388,6 +389,10 @@ function requestUserSettings() {
 				{
 				        bio: data.userProfile["userBio"]
 				}, { append: true });
+				
+			$( "#personal-form" ).on('shown.bs.modal', function(){
+				$("#personalLocation").easyAutocomplete(userLocationOptions);
+			});
 			
 			
 		}
@@ -605,6 +610,43 @@ var options = {
 
 };
 
+var userLocationOptions = {
+  url: function(phrase) {
+		return "//maps.googleapis.com/maps/api/geocode/json?address=" + phrase;
+	},
+  
+  placeholder: "Type to search location",
+  
+  getValue: "formatted_address",
+  
+  cssClasses: "userLocation",
+  
+  adjustWidth: false,
+  
+  requestDelay: 500,
+  
+  listLocation: "results",
+
+  list: {
+		maxNumberOfElements: 10,
+		match: {
+				enabled: true
+		},
+		showAnimation: {
+		  type: "slide"
+		},
+		hideAnimation: {
+		  type: "slide"
+		},
+		onChooseEvent: function() {
+			var index = $("#personalLocation").getSelectedItemIndex();
+			console.log($("#personalLocation").getItemData(index));
+			//window.location = $("#personalLocation").getItemData(index).profileLink;
+		}
+  }
+
+};
+
 angular.module('app', ['ngImgCrop'])
   .controller('Ctrl', function($scope) {
     $scope.myImage = '';
@@ -633,12 +675,13 @@ angular.module('app', ['ngImgCrop'])
 
 $("document").ready(function() {
 	setInterval(function()
-		{
-			$(".say").each(function() {
-				var timeCode = $(this).data("timestamp");
-				$(this).find(".timeStamp").text(moment(timeCode).fromNow());
-			});
-		},60000);
+	{
+		$(".say").each(function() {
+			var timeCode = $(this).data("timestamp");
+			$(this).find(".timeStamp").text(moment(timeCode).fromNow());
+		});
+	},60000);
+	
 	$("#userSearch").easyAutocomplete(options);
 	$(document).on('click', '.applaud', function(){		
 		var $el = $(this).parent().parent().parent().parent();
