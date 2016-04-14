@@ -799,7 +799,8 @@ function UpdateProfile($profileID)
 		$dob = str_replace('/', '-', $dob);
 		$dob = date("Y-m-d", strtotime($dob));
 		$gender = substr($_POST['gender'], 0, 1);
-
+		$location =  filter_var($_POST['location'], FILTER_SANITIZE_STRING);
+		
 		$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userName = ? AND profileID != ?", Array($userName, $profileID));
 		if (count($queryResult) == 0)
 		{
@@ -809,7 +810,7 @@ function UpdateProfile($profileID)
 			    "userName" => $userName,
 			    "dob" => $dob,
 			    "gender" => $gender,
-
+				"location" => $location,
 			);
 			$db->where("profileID", $profileID);
 			$db->update("Profile", $data);
