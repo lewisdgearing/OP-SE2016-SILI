@@ -736,6 +736,94 @@ function SayActivity($profileID, $action)
 	
 }
 
+
+/**
+ *
+ * Returns the people who performed the action
+ * 
+ * Returns an array of users who performed the action to the sayID that was provided
+ *
+ * @param    int $profileID of the current logged in user
+ * @param    string $action the action being returned (Applaud/Re-Say/Boo)
+ * @return   arrray of users who did the action
+ *
+ */
+function GetActivityUsers($profileID, $action)
+{
+	global $db, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
+	
+	$result = array();
+	$errors = array();
+	
+	//Pre Requirments
+	if ($db->ping() !== TRUE) 
+	{
+		array_push($errors, $errorCodes["M001"]);
+	}
+	
+	if (count($request) >= 3)
+	{
+		$sayID = filter_var($request[2], FILTER_SANITIZE_STRING);
+	}
+	else
+	{
+		array_push($errors, $errorCodes["G000"]);
+	}
+	
+	if ($profileID === 0)
+	{
+		array_push($errors, $errorCodes["G001"]);
+	}
+	
+	$users = array();
+	
+	if ($profileID === 0)
+	{
+		array_push($errors, $errorCodes["G002"]);
+	}
+	
+	//Process
+	if (count($errors) == 0) //If theres no errors so far
+	{			
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT profileID FROM Activity WHERE sayID = ? AND activity = ?) LIMIT 10", Array($sayID, $action));
+		if (count($queryResult) > 0)
+		{
+			foreach ($queryResult as $user) 
+			{
+				$firstName = $user["firstName"];
+				$lastName = $user["lastName"];
+				$userName = $user["userName"];
+				$profileImage = $user["profileImage"];
+					 
+				if ($profileImage == "")
+				{
+					$profileImage = $defaultProfileImg;
+				}
+				
+				$user = [
+					"firstName" => $firstName,
+					"lastName" => $lastName,
+					"userName" => $userName,
+					"profileImage" => $profileImagePath . $profileImage,
+				];	
+				array_push($users, $user);
+			}				
+ 
+		}
+	}
+
+	if (count($errors) == 0)
+	{
+		$result["users"] = $users;
+	}
+	else
+	{
+		$result["errors"] = $errors;
+	}
+	
+	return $result;
+}
+
 /**
  *
  * Preform Boo Action
@@ -764,6 +852,36 @@ function Applaud($profileID)
 function ReSay($profileID)
 {
 	return SayActivity($profileID, "Re-Say");	
+}
+
+/**
+ *
+ * Return the users who Applaud a Say
+ *
+ */
+function ApplaudUsers($profileID)
+{
+	return GetActivityUsers($profileID, "Applaud");	
+}
+
+/**
+ *
+ * Return the users who Boo a Say
+ *
+ */
+function BooUsers($profileID)
+{
+	return GetActivityUsers($profileID, "Boo");	
+}
+
+/**
+ *
+ * Return the users who ReSay a Say
+ *
+ */
+function ResayUsers($profileID)
+{
+	return GetActivityUsers($profileID, "Re-Say");	
 }
 
 /**
