@@ -35,18 +35,20 @@ if (is_ajax())
 	if(isset($_GET['request']))
 	{	
 		$request = explode("/", filter_var($_GET['request'], FILTER_SANITIZE_STRING));
-		
+
 		//Check if the request is a vaild request
 		if (array_key_exists($request[0], $reqArray) && count($request) > 1) {
-			if($request[1] == "")
+			$requestedAPI = $request[0];
+			$requestedFunction = $request[1];
+			if($requestedFunction == "" || is_numeric($requestedFunction))
 			{
-				$request[1] = 0;
+				$requestedFunction = 0;
 			}
-			if (array_key_exists($request[1], $reqArray[$request[0]])) 
+			if (array_key_exists($requestedFunction, $reqArray[$requestedAPI])) 
 			{
-				if (array_key_exists($_SERVER['REQUEST_METHOD'], $reqArray[$request[0]][$request[1]])) 
+				if (array_key_exists($_SERVER['REQUEST_METHOD'], $reqArray[$requestedAPI][$requestedFunction])) 
 				{
-					$result = $reqArray[$request[0]][$request[1]][$_SERVER['REQUEST_METHOD']]($profileID, $userID);
+					$result = $reqArray[$requestedAPI][$requestedFunction][$_SERVER['REQUEST_METHOD']]($profileID, $userID);
 					
 					//Output Request json result
 					header('Content-Type: application/json');

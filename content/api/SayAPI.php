@@ -146,19 +146,20 @@ function GetSays($profileID) //Returns all the says based of the people listened
 
 	if (count($request) >= 3)
 	{
+		if (strlen($request[1]) > 0)
+		{
+			$offset = filter_var($request[1], FILTER_SANITIZE_NUMBER_INT);	
+		}
+
 		if (strlen($request[2]) > 0)
 		{
 			$timestamp = filter_var($request[2], FILTER_SANITIZE_NUMBER_INT);	
-		}
-
-		if (strlen($request[3]) > 0)
-		{
-			$offset = filter_var($request[3], FILTER_SANITIZE_NUMBER_INT);	
 		} 	
 	}
 
 	if ($profileID !== 0)
 	{
+		$offset *= 10;
 		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND timePosted >= ? AND (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments) ORDER BY timePosted DESC LIMIT ?,10";	
 		
 		$queryResult = $db->rawQuery($saysQuery, Array($timestamp, $profileID, $profileID, $profileID, $offset));
@@ -170,7 +171,11 @@ function GetSays($profileID) //Returns all the says based of the people listened
 			}
 		}	
 
+		//$totalPages = calcuatePages($profileID, $offset);
+		//$currentPage = $offset / 10;
 		$result["says"] = $says;
+		//$result["currentPage"] = $currentPage;
+		//$result["totalPages"] = $totalPages;
 	}
 	
 	return $result;
