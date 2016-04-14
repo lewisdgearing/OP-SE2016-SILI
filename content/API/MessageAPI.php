@@ -167,9 +167,32 @@ function GetMessages($profileID)
 	}
 	else
 	{
-		$messagesQuery = "SELECT message, isRead, timeSent, firstName, lastName, profileImage, userName FROM Message JOIN Profile ON Message.recipientProfileID = Profile.profileID WHERE Message.profileID = ? GROUP BY recipientProfileID ORDER BY timeSent ASC";
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID = ?", Array($recipientProfileID));
 
-		$queryResult = $db->rawQuery($messagesQuery, Array($recipientProfileID));
+		if (count($queryResult) == 1)
+		{
+			$firstName = $queryResult[0]["firstName"];
+			$lastName = $queryResult[0]["lastName"];
+			$userName = $queryResult[0]["userName"];
+			$profileImage = $queryResult[0]["profileImage"];
+				
+							
+			if ($profileImage == "")
+			{
+				$profileImage = $defaultProfileImg;
+			}
+			
+			$messageProfile = [
+			"firstName" => $firstName,
+			"lastName" => $lastName,
+			"userName" => $userName,
+			"profileImage" => $profileImagePath . $profileImage,
+			];
+		}
+
+		$messagesQuery = "SELECT messageID FROM Message WHERE profileID = ? AND recipientProfileID = ? ORDER BY timeSent DESC";
+
+		$queryResult = $db->rawQuery($messagesQuery, Array($profileID, $recipientProfileID));
 		if (count($queryResult) >= 1)
 		{
 			foreach ($queryResult as $value) {
@@ -178,6 +201,7 @@ function GetMessages($profileID)
 			}
 		}	
 
+		$result["recipientProfile"] = $messageProfile;
 		$result["messages"] = $messages;
 	}
 	return $result;
@@ -194,6 +218,49 @@ function GetMessages($profileID)
  *
  */
 function GetConversation($profileID)
+{
+	global $db, $errorCodes;
+	// Arrays for jsons
+	$result = array();
+	$messages = array();
+
+	if ($db->ping() !== TRUE) 
+	{
+		array_push($errors, $errorCodes["M001"]);
+	}
+
+	if ($profileID === 0)
+	{
+		array_push($errors, $errorCodes["G002"]);
+	}
+	else
+	{
+		$messagesQuery = "SELECT messageID FROM Message WHERE Message.profileID = ? GROUP BY recipientProfileID ORDER BY timeSent ASC ";
+
+		$queryResult = $db->rawQuery($messagesQuery, Array($profileID));
+		if (count($queryResult) >= 1)
+		{
+			foreach ($queryResult as $value) {
+				$messageID = $value["messageID"];
+				array_push($messages, FetchMessage($messageID));
+			}
+		}	
+
+		$result["messages"] = $messages;
+	}
+	return $result;
+}
+
+/**
+ *
+ * Return messages requested by the above functions, GetConversation(), GetMessages(), and MessageIt()
+ * 
+ *
+ * @param    int  $messageID of the requested message
+ * @return   array Containing the message requested
+ *
+ */
+function FetchMessage($messageID)
 {
 
 }
