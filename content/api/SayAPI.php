@@ -131,7 +131,7 @@ function SayIt($profileID) //Adds A Say
  */
 function GetSays($profileID) //Returns all the says based of the people listened to by the logged in user
 {	
-	global $db, $errorCodes;
+	global $db, $errorCodes, $request;
 	// Arrays for jsons
 	$result = array();
 	$says = array();
@@ -140,12 +140,28 @@ function GetSays($profileID) //Returns all the says based of the people listened
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
-	
+
+	$timestamp = microtime();
+	$offset = 0;
+
+	if (count($request) >= 3)
+	{
+		if (strlen($request[2]) > 0)
+		{
+			$timestamp = filter_var($request[2], FILTER_SANITIZE_NUMBER_INT);	
+		}
+
+		if (strlen($request[3]) > 0)
+		{
+			$offset = filter_var($request[3], FILTER_SANITIZE_NUMBER_INT);	
+		} 	
+	}
+
 	if ($profileID !== 0)
 	{
-		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments) ORDER BY timePosted DESC";	
+		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND timePosted >= ? AND (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments) ORDER BY timePosted DESC LIMIT ?,10";	
 		
-		$queryResult = $db->rawQuery($saysQuery, Array($profileID, $profileID, $profileID));
+		$queryResult = $db->rawQuery($saysQuery, Array($timestamp, $profileID, $profileID, $profileID, $offset));
 		if (count($queryResult) >= 1)
 		{
 			foreach ($queryResult as $value) {
