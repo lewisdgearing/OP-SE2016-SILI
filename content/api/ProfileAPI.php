@@ -1106,4 +1106,68 @@ function UpdateEmail($profileID, $userID)
 	}
 	return $result;
 }
+
+/**
+ *
+ * Update a users profile Picture
+ * 
+ *
+ * @param    int $userID of the current User
+ * @return   arrray arrray result if it was successful or failed
+ *
+ */
+function UpdateProfileImage($profileID)
+{
+	global $db, $errorCodes, $profileImagePath;
+	
+	$result = array();
+	$errors = array();
+	
+	if ($db->ping() !== TRUE) 
+	{
+		array_push($errors, $errorCodes["M001"]);
+	}
+	
+	if ($profileID === 0)
+	{
+		array_push($errors, $errorCodes["G001"]);
+	}
+	
+	if (isset($_POST['profileImage']))
+	{
+		$profileImageBase64 = explode(',', $_POST['profileImage']);
+		$profileImage = $profileImageBase64[1];
+		$img = imagecreatefromstring(base64_decode($profileImage));
+		if (!$img) {
+      		array_push($errors, $errorCodes["G000"]);
+    	}
+	}
+	else
+	{
+		array_push($errors, $errorCodes["G000"]);
+	}
+			
+	if (count($errors) == 0) 
+	{
+		$profileImageFileName = sha1($profileImage) . "_" . time() . ".jpg";
+
+		$data = Array(
+			"profileImage" => $profileImageFileName,
+		);
+		$db->where("profileID", $profileID);
+		$db->update("Profile", $data);
+
+		imagejpeg($img, "../profilePics/" . $profileImageFileName);
+	}
+	
+	if (count($errors) == 0) //If no errors user is logged in
+	{
+		$result["message"] = "Profile Image Updated";
+	}
+	else
+	{
+		$result["errors"] = $errors;
+	}
+	return $result;
+}
 ?>

@@ -450,10 +450,7 @@ function ProfileEdit(data)
 			
 		},				
 	  success: function(data) {	
-			$('#personal-form').modal('hide');
-			$('body').removeClass('modal-open');
-			$('.modal-backdrop').remove();
-			getUserSettings();
+			AccountSettingsUpdate('#personal-form');
 		}
 	});
 	return false;
@@ -470,10 +467,7 @@ function ProfilePasswordChange(data)
 			
 		},				
 	  success: function(data) {	
-			$('#changePassword-form').modal('toggle');
-			$('body').removeClass('modal-open');
-			$('.modal-backdrop').remove();
-			getUserSettings();
+			AccountSettingsUpdate('#changePassword-form');
 		}
 	});
 	return false;
@@ -490,10 +484,7 @@ function ProfileEmailChange(data)
 			
 		},				
 	  success: function(data) {	
-			$('#changeEmail-form').modal('toggle');
-			$('body').removeClass('modal-open');
-			$('.modal-backdrop').remove();
-			getUserSettings();
+			AccountSettingsUpdate('#changeEmail-form');
 		}
 	});
 	return false;
@@ -510,10 +501,24 @@ function ProfileBioEdit(data)
 			
 		},				
 	  success: function(data) {	
-			$('#userBio-form').modal('toggle');
-			$('body').removeClass('modal-open');
-			$('.modal-backdrop').remove();
-			getUserSettings();
+			AccountSettingsUpdate('#userBio-form');
+		}
+	});
+	return false;
+}
+
+function ProfileImageEdit(data)
+{
+	$.ajax({
+	  type: "POST",
+	  dataType: "json",
+	  url: "API/profile/image",
+	  data: data,
+	  error: function(jqXHR, textStatus, errorThrown) {
+			
+		},				
+	  success: function(data) {	
+			AccountSettingsUpdate('#profileImage-form');
 		}
 	});
 	return false;
@@ -559,6 +564,20 @@ function GetActionUser(sayID, action) {
 	});
 	
 	return [count, status];
+}
+
+function AccountSettingsUpdate(modal)
+{
+	getUserDetials().done(function() {
+	if(loggedIn) {
+		$("#profileImage").attr("src", profileImage);
+		$("#userName").text(firstName);
+	}
+	});
+	$(modal).modal('toggle');
+	$('body').removeClass('modal-open');
+	$('.modal-backdrop').remove();
+	getUserSettings();
 }
 
 

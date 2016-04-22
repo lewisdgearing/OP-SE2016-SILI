@@ -68,7 +68,7 @@
 					<div class="cropArea">
 						<img-crop image="myImage" result-image="myCroppedImage" result-image-format="image/jpeg" result-image-size="500" on-load-done="onLoadDone()" on-load-error="onLoadError()"></img-crop>
 					</div>
-					<input type="hidden" name="image64" value="{{myCroppedImage}}">
+					<input type="hidden" name="profileImage" value="{{myCroppedImage}}">
 					
 					<button class="btn btn-lg btn-block userProfile" type="submit">Submit</button>
 				</form>
@@ -100,6 +100,12 @@
 			e.preventDefault();
 			var data = $(this).serialize();
 			ProfileBioEdit(data);
+		});
+
+		$(document).on('submit','.profileImage-form', function(e){
+			e.preventDefault();
+			var data = $(this).serialize();
+			ProfileImageEdit(data);
 		});
 		
 		$(document).on('submit','.changeEmail-form', function(e){
