@@ -204,9 +204,15 @@ function CalcuateSaysPages($profileID, $timestamp)
 		$totalSays = $queryResult[0]["totalSays"];
 	}
 
-	$totalSays = ($totalSays % 10)  % ;
+	$nbrPages = floor($totalSays / 10);
 
-	return $totalSays;
+	if($nbrPages % 10 > 0)
+	{
+		$nbrPages += 1;
+	}
+
+
+	return $nbrPages;
 }
 
 /**
