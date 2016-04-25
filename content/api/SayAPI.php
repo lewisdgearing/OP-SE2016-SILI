@@ -171,14 +171,42 @@ function GetSays($profileID) //Returns all the says based of the people listened
 			}
 		}	
 
-		//$totalPages = calcuatePages($profileID, $offset);
+		$totalPages = CalcuateSaysPages($profileID, $timestamp);
 		//$currentPage = $offset / 10;
 		$result["says"] = $says;
 		//$result["currentPage"] = $currentPage;
-		//$result["totalPages"] = $totalPages;
+		$result["totalPages"] = $totalPages;
 	}
 	
 	return $result;
+}
+
+/**
+ *
+ * Returns the total number of says for the given user
+ *
+ *
+ * @param    int  $profileID 
+ * @param    int  $timestamp the time we are calcuating says from
+ * @return   array Containing the say
+ *
+ */
+function CalcuateSaysPages($profileID, $timestamp)
+{
+	global $db;
+	$totalSays = 0;
+
+	$countQuery = "SELECT count(sayID) as totalSays FROM Says WHERE deleted = 0 AND timePosted >= ? AND (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments)";
+	$queryResult = $db->rawQuery($countQuery, Array($timestamp, $profileID, $profileID, $profileID));
+
+	if (count($queryResult) >= 1)
+	{
+		$totalSays = $queryResult[0]["totalSays"];
+	}
+
+	$totalSays = ($totalSays % 10)  % ;
+
+	return $totalSays;
 }
 
 /**

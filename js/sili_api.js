@@ -3,6 +3,9 @@ var firstName = "";
 var lastName = "";
 var profileImage = "";
 var loggedIn = false;
+var timeNow = moment().valueOf();
+var currentPage = 0;
+var totalPages = 0;
 
 function userLogin(){
 	var data = $(this).serialize();
@@ -113,15 +116,21 @@ function addSay(){
 }
 
 function fetchSays(){
-	$.ajax({
+	return $.ajax({
 		dataType: "json",
-		url: "API/say/",
-		success: function(data) {			
+		url: "API/say/" + currentPage + "/" + timeNow,
+		success: function(data) {	
+			totalPages = totalPages == 0 ? data["totalPages"] : totalPages; 
 			$.each(data.says, function(index, element) {					
 				loadSay(".sayFeed",element);
 			});
 		}
 	});
+}
+
+function fetchMoreSays(){
+	currentPage = currentPage + 1;
+	return fetchSays();
 }
 
 function loadSay(location, element)
@@ -826,6 +835,16 @@ $("document").ready(function() {
 		$(this).blur();
 	});
 	
+	$('#loadSays').on('click', function() {
+	    var $this = $(this);
+	  	$this.button('loading');
+	  	fetchMoreSays().done( function() { 
+	  		$this.button('reset');
+	  		if (currentPage + 1 == totalPages) {
+	  			$this.remove();
+	  		} });
+	});
+
 	$("body").tooltip({
 		selector: '[data-toggle="tooltip"]'
 	});
