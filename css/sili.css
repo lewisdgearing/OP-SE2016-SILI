@@ -26,7 +26,7 @@ p, *
 	cursor: default;
 }
 
-a, .icons, .banner .user *, .pointer, .profileLink *
+a, .icons, .banner .user *, .pointer, .profileLink *, .reSayProfileLink *
 {
     cursor: pointer;
 }
@@ -338,4 +338,10 @@ input[type=file].profileImageUpload
 .resayHeader
 {
 	margin-left:15px;
+}
+
+.reSayProfileLink:link, .reSayProfileLink:visited, .reSayProfileLink:hover, .reSayProfileLink:active
+{
+	text-decoration: none;
+	color: #91AEC1;
 }
