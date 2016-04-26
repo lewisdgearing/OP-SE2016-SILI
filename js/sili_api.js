@@ -552,7 +552,7 @@ function GetActionUser(sayID, action) {
 		url: "API/say/" + action + "users/" + sayID,
 		success: function(data) {
 			var actionHeader = action;
-			if (action == "reSay")
+			if (action == "resay")
 			{
 				actionHeader = "Resaid"
 			} 
@@ -564,15 +564,26 @@ function GetActionUser(sayID, action) {
 			{
 				actionHeader = "Booed"
 			}
-			$(".sayDetailsModal").loadTemplate("content/templates/activity.html",
+			$(".activityModal").loadTemplate("content/templates/activity.html",
 				{
 					activityHeader:"Users that " + actionHeader,
-				},{append: true});
+				});
+
+			$.each(data.users, function(index, element) {	
+				$(".activityModal").loadTemplate("content/templates/activityDispaly.html",
+					{
+						firstName:element.firstName,
+						lastName:element.lastName,
+						userName:element.userName,
+				});				
+				
+			});
+			
 			
 		}
 	});
 	
-	return [count, status];
+	
 }
 
 function AccountSettingsUpdate(modal)
@@ -789,7 +800,10 @@ $("document").ready(function() {
 	$(document).on('click', '.deleteModal', function(){
 		$('#confirmDelete').modal('show');
 	});
-	$(document).on('click', '.applaudModalCount, .booModalCount, .reSayModalCount', function(){
+	$(document).on('click', '.applaudUsers, .booUsers, .reSayUsers', function(){
+		var $el = $(this).parent().parent().parent().parent().parent();
+		var sayID = $el.attr('id');
+		var action = $(this).data('action');
 		GetActionUser(sayID, action);
 
 		$('#activityModal').modal('show');

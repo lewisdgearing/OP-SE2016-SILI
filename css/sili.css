@@ -204,9 +204,16 @@ textarea
 {
 	color: #E8E8E8;
 }
-.modalCount
+
+.usersDisplay
 {
-	font-size:30px;
+	border-top: 1px  solid #E8E8E8;
+	margin-top: 10px;
+	padding-bottom: 5px;
+	border-bottom: 1px solid #E8E8E8;
+	margin-bottom: 10px;
+	padding-top: 5px;
+
 }
 
 .icons.reSayOwn
