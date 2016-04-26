@@ -109,7 +109,7 @@ function MessageIt($profileID)
 			);
 			$db->insert("Message", $data);
 
-			$message = FetchMessage($messageID);			
+			$message = FetchMessage($messageID, $profileID);			
 		}
 	}
 
@@ -197,7 +197,7 @@ function GetMessages($profileID)
 		{
 			foreach ($queryResult as $value) {
 				$messageID = $value["messageID"];
-				array_push($messages, FetchMessage($messageID));
+				array_push($messages, FetchMessage($messageID, $profileID));
 			}
 		}	
 
@@ -242,7 +242,7 @@ function GetConversation($profileID)
 		{
 			foreach ($queryResult as $value) {
 				$messageID = $value["messageID"];
-				array_push($messages, FetchMessage($messageID));
+				array_push($messages, FetchMessage($messageID, $profileID));
 			}
 		}	
 
@@ -260,9 +260,48 @@ function GetConversation($profileID)
  * @return   array Containing the message requested
  *
  */
-function FetchMessage($messageID)
+function FetchMessage($messageID, $profileID)
 {
+	global $db, $errorCodes;
+	// Arrays for jsons
+	$result = array();
+	$messages = array();
 
+	$ownMessage = false;
+
+	if ($db->ping() !== TRUE) 
+	{
+		array_push($errors, $errorCodes["M001"]);
+	}
+
+	if ($profileID === 0)
+	{
+		array_push($errors, $errorCodes["G002"]);
+	}
+	else
+	{
+		$messagesQuery = "SELECT profileID, message, timeSent FROM Message WHERE messageID = ? ORDER BY timeSent ASC ";
+
+		$queryResult = $db->rawQuery($messagesQuery, Array($messageID));
+
+		$senderProfileID = $queryResult[0]["profileID"];
+		$message = $queryResult[0]["message"];
+		$timeSent = $queryResult[0]["timeSent"];
+		
+		if ($profileID == $senderProfileID)
+		{
+			$ownMessage = true;
+		}
+
+		$message = [
+		"ownMessage" => $ownMessage,
+		"messageID" => $messageID,
+		"message" => $message,
+		"timeSent" => strtotime($timeSent) * 1000,
+		];
+	}
+
+	return $message;
 }
 
 

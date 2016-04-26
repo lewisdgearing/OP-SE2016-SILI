@@ -34,4 +34,9 @@
 		"search" => ["GET" => "UserSearch"],
 		"user" => ["GET" => "GetUserProfile"],
 	];
+
+	$reqArray["message"] = [
+	0 => ["GET" => "GetMessages"],
+	"user" => ["GET" => "GetConversation", "POST" => "MessageIt"]
+	];
 ?>
