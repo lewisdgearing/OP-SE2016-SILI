@@ -121,8 +121,12 @@ function fetchSays(){
 		url: "API/say/" + currentPage + "/" + timeNow,
 		success: function(data) {	
 			totalPages = totalPages == 0 ? data["totalPages"] : totalPages; 
+			if (totalPages == 0)
+			{
+				$("#loadSays").remove();
+			}
 			$.each(data.says, function(index, element) {					
-				loadSay(".sayFeed",element);
+				loadSay(".sayFeed",element, false);
 			});
 		}
 	});
@@ -133,9 +137,9 @@ function fetchMoreSays(){
 	return fetchSays();
 }
 
-function loadSay(location, element)
+function loadSay(location, element, profileView)
 {
-	if(element["activityStatus"] === false || element["ownSay"] === true) 
+	if(element["activityStatus"] === false || element["ownSay"] === true && profileView === false) 
 	{
 		$(location).loadTemplate("content/templates/say.html",
 		{
@@ -181,16 +185,27 @@ function loadSay(location, element)
 	}
 }
 
-function fetchUserSays(userName){
-	$.ajax({
+function fetchUserSays(reqUserName){
+	return $.ajax({
 		dataType: "json",
-		url: "API/say/user/" + userName,
-		success: function(data) {			
+		url: "API/say/user/" + reqUserName + "/" + currentPage + "/" + timeNow,
+		success: function(data) {	
+			totalPages = totalPages == 0 ? data["totalPages"] : totalPages; 
+			if (totalPages == 0)
+			{
+				$("#loadSaysProfile").remove();
+			}
+
 			$.each(data.says, function(index, element) {				
-				loadSay(".sayFeed", element);		
+				loadSay(".sayFeed", element, true);		
 			});
 		}
 	});
+}
+
+function fetchMoreUserSays(reqUserName){
+	currentPage = currentPage + 1;
+	return fetchUserSays(reqUserName);
 }
 
 function assignActionStatus(elem, data) {
@@ -833,9 +848,9 @@ $("document").ready(function() {
 	$(document).on('click', '.listenButton', function(){
 		var $el = $(this).parent().parent().parent();
 		var userID = $el.data('userid');
-		var userName = $el.data('username');
+		var reqUserName = $el.data('username');
 		var listeningStatus = $(this).data("listening");
-		listenButton(userID, userName, listeningStatus);	
+		listenButton(userID, reqUserName, listeningStatus);	
 		$(this).blur();
 	});	
 
@@ -853,6 +868,23 @@ $("document").ready(function() {
 	    var $this = $(this);
 	  	$this.button('loading');
 	  	fetchMoreSays().done( function() { 
+	  		$this.button('reset');
+	  		if (currentPage + 1 == totalPages) {
+	  			$this.remove();
+	  		} });
+	});
+
+	$('#loadSaysProfile').on('click', function() {
+	    var $this = $(this);
+	  	$this.button('loading');
+	  	var pathArray = window.location.pathname.split( '/' );
+		var reqUserName = '';
+		if(typeof pathArray[3] !== 'undefined')
+		{
+			reqUserName = pathArray[3];
+			reqUserName = window.btoa(reqUserName).replace("=","");
+		}
+	  	fetchMoreUserSays(reqUserName).done( function() { 
 	  		$this.button('reset');
 	  		if (currentPage + 1 == totalPages) {
 	  			$this.remove();

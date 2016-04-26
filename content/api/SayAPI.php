@@ -171,7 +171,7 @@ function GetSays($profileID) //Returns all the says based of the people listened
 			}
 		}	
 
-		$totalPages = CalcuateSaysPages($profileID, $timestamp);
+		$totalPages = CalcuateSaysPages($profileID, $timestamp, "says");
 		//$currentPage = $offset / 10;
 		$result["says"] = $says;
 		//$result["currentPage"] = $currentPage;
@@ -188,16 +188,35 @@ function GetSays($profileID) //Returns all the says based of the people listened
  *
  * @param    int  $profileID 
  * @param    int  $timestamp the time we are calcuating says from
+ * @param    string $view the type of view (says|profile|comments)
  * @return   array Containing the say
  *
  */
-function CalcuateSaysPages($profileID, $timestamp)
+function CalcuateSaysPages($profileID, $timestamp, $view)
 {
 	global $db;
 	$totalSays = 0;
 
-	$countQuery = "SELECT count(sayID) as totalSays FROM Says WHERE deleted = 0 AND timePosted >= ? AND (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments)";
-	$queryResult = $db->rawQuery($countQuery, Array($timestamp, $profileID, $profileID, $profileID));
+	if ($view == "says")
+	{
+		$countQuery = "SELECT count(sayID) as totalSays FROM Says WHERE deleted = 0 AND timePosted >= ? AND (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments)";
+		$queryResult = $db->rawQuery($countQuery, Array($timestamp, $profileID, $profileID, $profileID));
+	} 
+	elseif ($view == "profile")
+	{
+		$countQuery = "SELECT count(sayID) as totalSays FROM Says WHERE deleted = 0 AND timePosted >= ? AND profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID = ? AND activity = \"Re-Say\")";
+		$queryResult = $db->rawQuery($countQuery, Array($timestamp, $profileID, $profileID));
+	}
+	elseif ($view == "comments") 
+	{
+		$countQuery = "";
+	}
+	else
+	{
+		return null;
+	}
+
+	
 
 	if (count($queryResult) >= 1)
 	{
@@ -206,7 +225,7 @@ function CalcuateSaysPages($profileID, $timestamp)
 
 	$nbrPages = floor($totalSays / 10);
 
-	if($nbrPages % 10 > 0)
+	if ($nbrPages % 10 > 0)
 	{
 		$nbrPages += 1;
 	}
@@ -226,12 +245,12 @@ function CalcuateSaysPages($profileID, $timestamp)
  * @return   array Containing the say
  *
  */
-function FetchSay($sayID, $justMe = false, $requestedUserID = 0) //Fetches the Say
+function FetchSay($sayID, $justMe = false, $requestedProfileID = 0) //Fetches the Say
 {
 	global $db, $profileImagePath, $defaultProfileImg, $profileID;
 	$say = array();
 
-	$queryResult = $db->rawQuery("SELECT sayID, timePosted, message, profileImage, firstName, lastName, userName, Says.profileID as postProfileID FROM Says INNER JOIN Profile ON Says.profileID=Profile.profileID WHERE sayID = ?", Array($sayID));
+	$queryResult = $db->rawQuery("SELECT sayID, timePosted, message, profileImage, firstName, lastName, userName FROM Says INNER JOIN Profile ON Says.profileID=Profile.profileID WHERE sayID = ?", Array($sayID));
 		
 	if (count($queryResult) == 1)
 	{
@@ -243,7 +262,6 @@ function FetchSay($sayID, $justMe = false, $requestedUserID = 0) //Fetches the S
 		$firstName = $queryResult[0]["firstName"];
 		$lastName = $queryResult[0]["lastName"];
 		$userName = $queryResult[0]["userName"];
-		$postUserID = $queryResult[0]["postProfileID"];
 						
 		if ($profileImage == "")
 		{
@@ -268,7 +286,7 @@ function FetchSay($sayID, $justMe = false, $requestedUserID = 0) //Fetches the S
 		"applaudStatus" => GetActivityStatus($profileID, $sayID, "Applaud"),
 		"resayStatus" => GetActivityStatus($profileID, $sayID, "Re-Say"),
 		"ownSay" => $ownSay,
-		"activityStatus" => GetActivity($profileID, $sayID, "Re-Say", $justMe, $requestedUserID),
+		"activityStatus" => GetActivity($profileID, $sayID, "Re-Say", $justMe, $requestedProfileID),
 		];
 	}	
 	
@@ -300,18 +318,40 @@ function GetUserSays($profileID) //Get the says of a user
 		array_push($errors, $errorCodes["G001"]);
 	}
 	
-	$requestedUserID = 0;
+	$requestedProfileID = 0;
+	$timestamp = microtime();
+	$offset = 0;
 
-	if (count($request) >= 3)
+	if (count($request) >= 5)
 	{
 		if (strlen($request[2]) > 0)
 		{
 			$requestedUserName = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));	
 		} 
-		else
+
+		if (strlen($request[3]) > 0)
 		{
-			$requestedProfileID = $profileID;
+			$offset = filter_var($request[3], FILTER_SANITIZE_NUMBER_INT);	
 		}
+
+		if (strlen($request[4]) > 0)
+		{
+			$timestamp = filter_var($request[4], FILTER_SANITIZE_NUMBER_INT);	
+		} 	
+	}
+	elseif (count($request) >= 4)
+	{
+		$requestedProfileID = $profileID;
+
+		if (strlen($request[2]) > 0)
+		{
+			$offset = filter_var($request[2], FILTER_SANITIZE_NUMBER_INT);	
+		}
+
+		if (strlen($request[3]) > 0)
+		{
+			$timestamp = filter_var($request[3], FILTER_SANITIZE_NUMBER_INT);	
+		} 	
 	}
 
 	if (isset($requestedUserName) && strlen($requestedUserName) > 0)
@@ -324,7 +364,7 @@ function GetUserSays($profileID) //Get the says of a user
 		}
 	}
 	
-	if (!isset($requestedUserID))
+	if (!isset($requestedProfileID))
 	{
 		return null;
 	}
@@ -332,9 +372,11 @@ function GetUserSays($profileID) //Get the says of a user
 	
 	if ($requestedProfileID !== 0) 
 	{
-		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID = ? AND activity = \"Re-Say\") ORDER BY timePosted DESC LIMIT 10";	
+		$offset *= 10;
+
+		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND timePosted >= ? AND profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID = ? AND activity = \"Re-Say\") ORDER BY timePosted DESC LIMIT ?,10";	
 		
-		$queryResult = $db->rawQuery($saysQuery , Array($requestedProfileID, $requestedProfileID));
+		$queryResult = $db->rawQuery($saysQuery , Array($timestamp, $requestedProfileID, $requestedProfileID, $offset));
 
 		if (count($queryResult) >= 1)
 		{
@@ -345,9 +387,12 @@ function GetUserSays($profileID) //Get the says of a user
 			}
 		}	
 	}
-		
-	$result["says"] = $says;
 	
+	$totalPages = CalcuateSaysPages($requestedProfileID, $timestamp, "profile");
+
+	$result["says"] = $says;
+	$result["totalPages"] = $totalPages;
+
 	return $result;
 }
 
