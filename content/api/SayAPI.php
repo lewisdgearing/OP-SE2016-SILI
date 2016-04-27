@@ -23,6 +23,15 @@ if (!isset($internal) && !isset($controller))
 	exit;
 }
 
+//EmojiOne Code
+require('../config/emojione/autoload.php');
+$client = "\\Emojione\\Client";
+$client = new $client(new Emojione\Ruleset());
+//Set the image type to use
+$client->imageType = 'svg'; // or png (default)
+$client->ascii = true; // Convert ascii to emojis
+//EmojiOne Code End
+
 /**
  *
  * Generate a random sayID
@@ -64,7 +73,8 @@ return $sayID;
  */
 function SayIt($profileID) //Adds A Say
 {
-	global $db, $errorCodes;
+	global $db, $errorCodes, $client;
+	
 	// Arrays for jsons
 	$result = array();
 	$errors = array();
@@ -87,7 +97,7 @@ function SayIt($profileID) //Adds A Say
 		}
 		else
 		{
-			$sayContent = htmlspecialchars($_POST['sayBox']);
+			$sayContent = htmlspecialchars($client->toShort($_POST['sayBox']));
 			$sayID = GenerateSayID();
 
 			$data = Array(
@@ -247,7 +257,7 @@ function CalcuateSaysPages($profileID, $timestamp, $view)
  */
 function FetchSay($sayID, $justMe = false, $requestedProfileID = 0) //Fetches the Say
 {
-	global $db, $profileImagePath, $defaultProfileImg, $profileID;
+	global $db, $profileImagePath, $defaultProfileImg, $profileID, $client;
 	$say = array();
 
 	$queryResult = $db->rawQuery("SELECT sayID, timePosted, message, profileImage, firstName, lastName, userName FROM Says INNER JOIN Profile ON Says.profileID=Profile.profileID WHERE sayID = ?", Array($sayID));
@@ -273,7 +283,7 @@ function FetchSay($sayID, $justMe = false, $requestedProfileID = 0) //Fetches th
 		$say = [
 		"sayID" => $sayID,
 		"timePosted" => strtotime($timePosted) * 1000,
-		"message" => $message,
+		"message" => $client->toImage($message),
 		"profileImage" => $profileImagePath . $profileImage,
 		"profileLink" => "profile/" . $userName,
 		"firstName" => $firstName,
@@ -905,6 +915,7 @@ function GetActivityUsers($profileID, $action)
 					"lastName" => $lastName,
 					"userName" => $userName,
 					"profileImage" => $profileImagePath . $profileImage,
+					"profileLink" => "profile/" . $userName,
 				];	
 				array_push($users, $user);
 			}				
