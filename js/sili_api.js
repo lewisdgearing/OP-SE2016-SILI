@@ -235,6 +235,45 @@ function assignActionStatus(elem, data) {
 	}
 }
 
+function assignActionUsers(elem, data) {
+	var sayElement = elem;
+	var text = "";
+	var col = 1;
+	sayElement.find(".usersDisplay1").empty();
+	sayElement.find(".usersDisplay2").empty();
+	sayElement.find(".usersDisplay3").empty();
+	if(data["applauds"] > 0)
+	{
+		text = "Applaud";
+		if(data["applauds"] > 1)
+		{
+			text = "Applauds";
+		}
+		sayElement.find(".usersDisplay" + col).html("<span class=\"applaudUsers\" data-action=\"applaud\">" + data["applauds"] + " " + text + "</span>");
+		col = col + 1;	
+	}	
+	if(data["resays"] > 0)
+	{
+		text = "Re-Say";
+		if(data["resays"] > 1)
+		{
+			text = "Re-Says";
+		}
+		sayElement.find(".usersDisplay" + col).html("<span class=\"reSayUsers\" data-action=\"resay\">" + data["resays"] + " " + text + "</span>");
+		col = col + 1;	
+	}	
+	if(data["boos"] > 0)
+	{
+		text = "Boo";
+		if(data["boos"] > 1)
+		{
+			text = "Boos";
+		}
+		sayElement.find(".usersDisplay" + col).html("<span class=\"booUsers\" data-action=\"boo\">" + data["boos"] + " " + text + "</span>");
+		col = col + 1;	
+	}	
+}
+
 function fetchSayDetails(sayID){
 	return $.ajax({
 		dataType: "json",
@@ -255,6 +294,7 @@ function fetchSayDetails(sayID){
 				profileLink: data.say["profileLink"],
 			}, { afterInsert: function (elem) {
 						assignActionStatus(elem, data.say);
+						assignActionUsers(elem, data.say);
 			}});
 			
 		}
@@ -454,18 +494,17 @@ function deleteSay(sayID) {
 }
 
 function SayAction(sayID, action) {
-	var count, status;
+	var dataResult;
 	$.ajax({
 		dataType: "json",
 		async: false,
 		url: "API/say/" + action + "/" + sayID,
 		success: function(data) {
-			count = data["count"];			
-			status = data["status"];
+			dataResult = data;
 		}
 	});
 	
-	return [count, status];
+	return dataResult;
 }
 
 function ProfileEdit(data)
@@ -749,8 +788,8 @@ $("document").ready(function() {
 		var $el = $(this).parent().parent().parent().parent();
 		var sayID = $el.attr('id');
 		var action = SayAction(sayID, "applaud")
-		var count = action[0];
-		var status = action[1];
+		var count = action["applauds"];
+		var status = action["status"];
 		$(this).parent().find("span").html(count);			
 		setActionStatus($(this).parent().find("i"), status);	
 	});
@@ -758,20 +797,21 @@ $("document").ready(function() {
 		var $el = $(this).parent().parent().parent().parent().parent();
 		var sayID = $el.attr('id');
 		var action = SayAction(sayID, "applaud")
-		var count = action[0];
-		var status = action[1];
+		var count = action["applauds"];
+		var status = action["status"];
 		$(this).parent().parent().find("span.applaudModalCount").html(count);			
 		setActionStatus($(this).parent().find("i"), status);	
 		$("#" + sayID).find("span.applaud").html(count);	
 		setActionStatus($("#" + sayID).find("i.applaud"), status);
+		assignActionUsers($el, action);
 	});
 		
 	$(document).on('click', '.reSay', function(){
 		var $el = $(this).parent().parent().parent().parent();
 		var sayID = $el.attr('id');
 		var action = SayAction(sayID, "resay");
-		var count = action[0];
-		var status = action[1];
+		var count = action["resays"];
+		var status = action["status"];
 		$(this).parent().find("span").html(count);			
 		setActionStatus($(this).parent().find("i"), status);
 	});
@@ -780,20 +820,21 @@ $("document").ready(function() {
 		var $el = $(this).parent().parent().parent().parent().parent();
 		var sayID = $el.attr('id');
 		var action = SayAction(sayID, "resay")
-		var count = action[0];
-		var status = action[1];
+		var count = action["resays"];
+		var status = action["status"];
 		$(this).parent().parent().find("span.reSayModalCount").html(count);			
 		setActionStatus($(this).parent().find("i"), status);	
 		$("#" + sayID).find("span.reSay").html(count);	
 		setActionStatus($("#" + sayID).find("i.reSay"), status);
+		assignActionUsers($el, action);
 	});
 	
 	$(document).on('click', '.boo', function(){
 		var $el = $(this).parent().parent().parent().parent();
 		var sayID = $el.attr('id');
 		var action = SayAction(sayID, "boo");
-		var count = action[0];
-		var status = action[1];
+		var count = action["boos"];
+		var status = action["status"];
 		$(this).parent().find("span").html(count);			
 		setActionStatus($(this).parent().find("i"), status);
 		});
@@ -802,12 +843,13 @@ $("document").ready(function() {
 		var $el = $(this).parent().parent().parent().parent().parent();
 		var sayID = $el.attr('id');
 		var action = SayAction(sayID, "boo");
-		var count = action[0];
-		var status = action[1];
+		var count = action["boos"];
+		var status = action["status"];
 		$(this).parent().parent().find("span.booModalCount").html(count);			
 		setActionStatus($(this).parent().find("i"), status);	
 		$("#" + sayID).find("span.boo").html(count);	
 		setActionStatus($("#" + sayID).find("i.boo"), status);
+		assignActionUsers($el, action);
 	});	
 		
 	$(document).on('click', '.more', function(){
