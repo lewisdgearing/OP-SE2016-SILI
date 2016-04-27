@@ -832,9 +832,11 @@ function SayActivity($profileID, $action)
 	
 	if (count($errors) == 0)
 	{
-		$result["message"] = "Action Completed";
+		$result["message"] = "$action Completed";
 		$result["status"] = $status;
-		$result["count"] = GetActivityCount($sayID, $action);
+		$result["applauds"] = GetActivityCount($sayID, "Applaud");
+		$result["boos"] = GetActivityCount($sayID, "Boo");
+		$result["resays"] = GetActivityCount($sayID, "Re-Say");
 	}
 	else
 	{
