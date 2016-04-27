@@ -225,10 +225,13 @@ function assignActionStatus(elem, data) {
 		sayElement.find("i.reSay").removeClass("reSay");
 		sayElement.find("i.reSayModal").addClass("reSayOwn");
 		sayElement.find("i.reSayModal").removeClass("reSay");
+		sayElement.find("i.reportModal").remove();
+		$(document).find("#confirmReport").remove();
 	}
 	else
 	{
 		sayElement.find("i.deleteModal").remove();
+		$(document).find("#confirmDelete").remove();
 	}
 }
 

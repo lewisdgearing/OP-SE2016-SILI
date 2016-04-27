@@ -358,3 +358,9 @@ input[type=file].profileImageUpload
 {
 	margin-top: 12px;
 }
+
+.emojione
+{
+	height: 10ex;
+	width: 10ex;
+}
