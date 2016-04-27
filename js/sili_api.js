@@ -7,6 +7,8 @@ var timeNow = moment().valueOf();
 var currentPage = 0;
 var totalPages = 0;
 
+window.emojioneVersion = "2.1.1";
+
 function userLogin(){
 	var data = $(this).serialize();
 	$.ajax({
@@ -93,7 +95,7 @@ function addSay(){
 		url: "API/say/",
 		data: data,
 		success: function(data) {	
-			$(".sayBox").val("");
+		$('.emojionearea-editor').text('');
 			$(".sayFeed").loadTemplate("content/templates/say.html",
 				{
 					sayID: data.say["sayID"],
@@ -582,15 +584,18 @@ function GetActionUser(sayID, action) {
 			$(".activityModal").loadTemplate("content/templates/activity.html",
 				{
 					activityHeader:"Users that " + actionHeader,
-				});
+				}, {async: false});
+
 
 			$.each(data.users, function(index, element) {	
-				$(".activityModal").loadTemplate("content/templates/activityDispaly.html",
+				$(".activityFeed").loadTemplate("content/templates/activityDisplay.html",
 					{
-						firstName:element.firstName,
-						lastName:element.lastName,
-						userName:element.userName,
-				});				
+						profileLink:element["profileLink"],
+						profilePicture:element["profileImage"],
+						firstName:element["firstName"],
+						lastName:element["lastName"],
+						userName:element["userName"],
+					},{append: true});				
 				
 			});
 			
