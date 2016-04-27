@@ -226,7 +226,6 @@ function CalcuateSaysPages($profileID, $timestamp, $view)
 		return null;
 	}
 
-	
 
 	if (count($queryResult) >= 1)
 	{
@@ -235,7 +234,7 @@ function CalcuateSaysPages($profileID, $timestamp, $view)
 
 	$nbrPages = floor($totalSays / 10);
 
-	if ($nbrPages % 10 > 0)
+	if ($totalSays % 10 > 0)
 	{
 		$nbrPages += 1;
 	}
