@@ -80,7 +80,7 @@ function MessageIt($profileID)
 	{
 		if (strlen($request[2]) > 0)
 		{
-			$recipientProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);	
+			$recipientProfileID = GetProfileID(base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING)));
 		}
 	}
 	
@@ -157,7 +157,7 @@ function GetMessages($profileID)
 	{
 		if (strlen($request[2]) > 0)
 		{
-			$recipientProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);	
+			$recipientProfileID = GetProfileID(base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING)));
 		}
 	}
 	

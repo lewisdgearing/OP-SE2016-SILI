@@ -16,6 +16,7 @@ include("../config/config.inc.php");
 include("UserAPI.php");
 include("SayAPI.php");
 include("ProfileAPI.php");
+include("MessageAPI.php");
 
 
 //Check if the request is coming from one of the scripts

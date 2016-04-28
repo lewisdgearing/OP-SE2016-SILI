@@ -354,6 +354,38 @@ function addComment(data, sayID){
 	return false;
 }
 
+function fetchConversations(){
+	return $.ajax({
+		dataType: "json",
+		url: "API/message/",
+		success: function(data){
+			console.log(data);
+			$.each(data.messages, function(index, element){
+				$(".conversations").loadTemplate("content/templates/conversation.html",
+				{
+					firstName: element["firstName"],
+				    lastName: element["lastName"],
+				    userName: element["userName"],
+					message: element["message"],
+					profilePicture: element["profileImage"],
+					timePosted: moment(element["timePosted"]).format('lll'),
+					profileLink: element["profileLink"],
+				}, { append: true, afterInsert: function (elem) {
+					assignActionStatus(elem, element);
+				}})
+			})
+		}
+	})
+}
+
+function fetchMessages(data, userName){
+
+}
+
+function addMessage(data, userName){
+
+}
+
 function getUserDetials() {
 	return $.ajax({
 		dataType: "json",

@@ -1,0 +1,21 @@
+<div class="row message" data-id="profileID" data-template-bind='[
+     {"attribute": "data-timeStamp", "value": "timeStamp"}]'>
+	<div class="col-md-1 messageProfilePic">
+		<a data-href="profileLink" class="profileLink"><img class="messageProfileImg img-circle pull-right" data-src="profilePicture" /></a>
+	</div> 
+	<div class="col-md-11 conversationDetails">
+		<div class="row">
+			<div class="col-md-8">
+				<a data-href="profileLink" class="profileLink"><span data-content="firstName"></span> <span data-content="lastName"></span> (<span data-content="userName"></span>)</a>
+			</div>
+			<div class="col-md-4 text-right">
+				<span class="timeStamp" data-content="timePosted"></span> 
+			</div>
+		</div> 
+		<div class="row"> 
+			<div class="col-md-12 conversations">
+				<span data-content="conersation"></span> 
+			</div>
+		</div> 
+	</div>
+</div>

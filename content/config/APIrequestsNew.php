@@ -36,7 +36,7 @@
 	];
 
 	$reqArray["message"] = [
-	0 => ["GET" => "GetMessages"],
-	"user" => ["GET" => "GetConversation", "POST" => "MessageIt"]
+	0 => ["GET" => "GetConversation"],
+	"user" => ["GET" => "GetMessages", "POST" => "MessageIt"]
 	];
 ?>
