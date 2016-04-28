@@ -648,6 +648,46 @@ function GetActionUser(sayID, action) {
 	
 }
 
+function GetProfileListeners(action, name, userProfileId) {
+	$.ajax({
+		dataType: "json",
+		async: false,
+		url: "API/profile/" + action + "/" + userProfileId,
+		success: function(data) {
+			var actionHeader = action;
+			if (action == "listeners")
+			{
+				actionHeader = "Users that listen to " + name;
+			} 
+			else
+			{
+				actionHeader = name + "'s Audience";
+			}
+			$(".profileModal").loadTemplate("content/templates/profileModal.html",
+				{
+					profileHeader:actionHeader,
+				}, {async: false});
+
+
+			$.each(data.users, function(index, element) {	
+				$(".profileFeed").loadTemplate("content/templates/activityDisplay.html",
+					{
+						profileLink:element["profileLink"],
+						profilePicture:element["profileImage"],
+						firstName:element["firstName"],
+						lastName:element["lastName"],
+						userName:element["userName"],
+					},{append: true});				
+				
+			});
+			
+			
+		}
+	});
+	
+	
+}
+
 function AccountSettingsUpdate(modal)
 {
 	getUserDetials().done(function() {
@@ -862,9 +902,11 @@ $("document").ready(function() {
 			});
 		});
 	});
+
 	$(document).on('click', '.deleteModal', function(){
 		$('#confirmDelete').modal('show');
 	});
+
 	$(document).on('click', '.applaudUsers, .booUsers, .reSayUsers', function(){
 		var $el = $(this).parent().parent().parent().parent().parent();
 		var sayID = $el.attr('id');
@@ -873,6 +915,16 @@ $("document").ready(function() {
 
 		$('#activityModal').modal('show');
 	});
+
+	$(document).on('click', '.listeningUsers, .userAudience', function(){
+		var $el = $(this).parent().parent().parent();		
+		var action = $(this).data('action');
+		var name = $(document).find(".profile-name").text();
+		var userProfileId = $el.data('userid');		
+		GetProfileListeners(action, name, userProfileId);
+		$('#profileModal').modal('show');
+	});
+
 	$(document).on('click', '.confirmDelete', function(){
 		var $el = $(this).parent().parent();
 		var sayID = $el.attr('data-sayID');
@@ -884,6 +936,7 @@ $("document").ready(function() {
 		$('.modal-backdrop').remove();
 		deleteSay(sayID);
 	});
+
 	$(document).on('click', '.commentPen', function(){
 		var $el = $(this).parent().parent().parent().parent();
 		var sayID = $el.attr('id');
