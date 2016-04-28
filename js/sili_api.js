@@ -525,6 +525,16 @@ function deleteSay(sayID) {
 	return false;
 }
 
+function ReportSay(sayID) {
+	$.ajax({
+		dataType: "json",
+		async: false,
+		url: "API/say/report/" + sayID,
+		
+	});
+	return false;
+}
+
 function SayAction(sayID, action) {
 	var dataResult;
 	$.ajax({
@@ -939,6 +949,10 @@ $("document").ready(function() {
 		$('#confirmDelete').modal('show');
 	});
 
+	$(document).on('click', '.reportModal', function(){
+		$('#confirmReport').modal('show');
+	});
+
 	$(document).on('click', '.applaudUsers, .booUsers, .reSayUsers', function(){
 		var $el = $(this).parent().parent().parent().parent().parent();
 		var sayID = $el.attr('id');
@@ -967,6 +981,18 @@ $("document").ready(function() {
 		$('body').removeClass('modal-open');
 		$('.modal-backdrop').remove();
 		deleteSay(sayID);
+	});
+
+	$(document).on('click', '.confirmReport', function(){
+		var $el = $(this).parent().parent();
+		var sayID = $el.attr('data-sayID');
+		$('#confirmReport').modal('hide');
+		$('#sayDetailsModal').modal('hide');
+		$('#' + sayID).remove();
+		$('.sayDetailsModal').empty();
+		$('body').removeClass('modal-open');
+		$('.modal-backdrop').remove();
+		ReportSay(sayID);
 	});
 
 	$(document).on('click', '.commentPen', function(){

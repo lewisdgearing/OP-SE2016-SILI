@@ -25,11 +25,11 @@ if (!isset($internal) && !isset($controller))
 
 //EmojiOne Code
 require('../config/emojione/autoload.php');
-$client = "\\Emojione\\Client";
-$client = new $client(new Emojione\Ruleset());
+$Emojione = "\\Emojione\\Client";
+$Emojione = new $Emojione(new Emojione\Ruleset());
 //Set the image type to use
-$client->imageType = 'svg'; // or png (default)
-$client->ascii = true; // Convert ascii to emojis
+$Emojione->imageType = 'svg'; // or png (default)
+$Emojione->ascii = true; // Convert ascii to emojis
 //EmojiOne Code End
 
 /**
@@ -73,7 +73,7 @@ return $sayID;
  */
 function SayIt($profileID) //Adds A Say
 {
-	global $db, $errorCodes, $client;
+	global $db, $errorCodes, $Emojione;
 	
 	// Arrays for jsons
 	$result = array();
@@ -97,7 +97,7 @@ function SayIt($profileID) //Adds A Say
 		}
 		else
 		{
-			$sayContent = htmlspecialchars($client->toShort($_POST['sayBox']));
+			$sayContent = htmlspecialchars($Emojione->toShort($_POST['sayBox']));
 			$sayID = GenerateSayID();
 
 			$data = Array(
@@ -170,9 +170,9 @@ function GetSays($profileID) //Returns all the says based of the people listened
 	if ($profileID !== 0)
 	{
 		$offset *= 10;
-		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND timePosted >= ? AND (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments) ORDER BY timePosted DESC LIMIT ?,10";	
+		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND timePosted >= ? AND sayID NOT IN (SELECT sayID FROM ReportedSays WHERE reporterProfileID = ?) AND (profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) OR profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID IN (SELECT listenerProfileID FROM Listeners WHERE profileID = ?) AND activity = \"Re-Say\")) AND sayID NOT IN (SELECT commentID FROM Comments) ORDER BY timePosted DESC LIMIT ?,10";	
 		
-		$queryResult = $db->rawQuery($saysQuery, Array($timestamp, $profileID, $profileID, $profileID, $offset));
+		$queryResult = $db->rawQuery($saysQuery, Array($timestamp, $profileID, $profileID, $profileID, $profileID, $offset));
 		if (count($queryResult) >= 1)
 		{
 			foreach ($queryResult as $value) {
@@ -256,7 +256,7 @@ function CalcuateSaysPages($profileID, $timestamp, $view)
  */
 function FetchSay($sayID, $justMe = false, $requestedProfileID = 0) //Fetches the Say
 {
-	global $db, $profileImagePath, $defaultProfileImg, $profileID, $client;
+	global $db, $profileImagePath, $defaultProfileImg, $profileID, $Emojione;
 	$say = array();
 
 	$queryResult = $db->rawQuery("SELECT sayID, timePosted, message, profileImage, firstName, lastName, userName FROM Says INNER JOIN Profile ON Says.profileID=Profile.profileID WHERE sayID = ?", Array($sayID));
@@ -282,7 +282,8 @@ function FetchSay($sayID, $justMe = false, $requestedProfileID = 0) //Fetches th
 		$say = [
 		"sayID" => $sayID,
 		"timePosted" => strtotime($timePosted) * 1000,
-		"message" => $client->toImage($message),
+		"message" => $Emojione->toImage($message),
+		"messageClean" => $message,
 		"profileImage" => $profileImagePath . $profileImage,
 		"profileLink" => "profile/" . $userName,
 		"firstName" => $firstName,
@@ -1053,6 +1054,89 @@ function DeleteSay($profileID)
 	if (count($errors) == 0)
 	{
 		$result["message"] = "Say Deleted";
+	}
+	else
+	{
+		$result["errors"] = $errors;
+	}
+	
+	return $result;
+	
+}
+
+/**
+ *
+ * Reports a Say
+ *
+ * @param    string $profileID of the current logged in user
+ * @return   array Result of the action
+ *
+ */
+function ReportSay($profileID)
+{
+	global $db, $errorCodes, $request;
+	
+	$result = array();
+	$errors = array();
+	
+	//Pre Requirments
+	if ($db->ping() !== TRUE) 
+	{
+		array_push($errors, $errorCodes["M001"]);
+	}
+		
+	if (count($request) >= 3)
+	{
+		$sayID = filter_var($request[2], FILTER_SANITIZE_STRING);
+	}
+	else
+	{
+		array_push($errors, $errorCodes["G000"]);
+	}
+	
+	if ($profileID === 0)
+	{
+		array_push($errors, $errorCodes["G001"]);
+	}
+
+	//Process
+	if (count($errors) == 0) //If theres no errors so far
+	{	
+		if (!GetOwnSayStatus($sayID, $profileID))
+		{
+			$data = Array(
+			    "sayID" => $sayID,
+			    "reporterProfileID" => $profileID,
+				"reportedDate" => date("Y-m-d H:i:s")
+			);
+			$db->insert("ReportedSays", $data);
+		}
+		else
+		{
+			array_push($errors, $errorCodes["G000"]);
+		}
+
+		$slackBot = "../config/SlackBot.php";
+		if (file_exists($slackBot))
+		{
+			include($slackBot);	
+			//Get the Details of the say
+			$say = FetchSay($sayID);
+
+			$sayMessage = $say["messageClean"];
+			$posterUserName = $say["userName"];
+			$reporterUserName = GetUserName($profileID);
+
+			
+			SlackBot_ReportSay($sayID, $sayMessage, $posterUserName, $reporterUserName);
+		}
+
+
+	}
+	
+	if (count($errors) == 0)
+	{
+		$result["message"] = "Say Reported";
 	}
 	else
 	{

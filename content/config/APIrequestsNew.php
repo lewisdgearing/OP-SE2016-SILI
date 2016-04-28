@@ -18,7 +18,7 @@
 		"applaudusers" =>	["GET" => "ApplaudUsers"],
 		"boousers" =>	["GET" => "BooUsers"],
 		"resayusers" =>	["GET" => "ResayUsers"],
-		"page" =>	["GET" => "GetSays"],
+		"report" =>	["GET" => "ReportSay"],
 		];
 		
 	$reqArray["profile"] = [
