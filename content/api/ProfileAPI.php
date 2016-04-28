@@ -637,6 +637,7 @@ function GetListeners($profileID)
 					"lastName" => $lastName,
 					"userName" => $userName,
 					"profileImage" => $profileImagePath . $profileImage,
+					"profileLink" => "profile/" . $userName,
 				];	
 				array_push($listeners, $listener);
 			}				
@@ -646,8 +647,8 @@ function GetListeners($profileID)
 
 	if (count($errors) == 0)
 	{
-		$result["totalListners"] = count($listeners);
-		$result["listeners"] = $listeners;
+		$result["totalListeners"] = count($listeners);
+		$result["users"] = $listeners;
 	}
 	else
 	{
@@ -710,6 +711,7 @@ function GetAudience($profileID)
 					"lastName" => $lastName,
 					"userName" => $userName,
 					"profileImage" => $profileImagePath . $profileImage,
+					"profileLink" => "profile/" . $userName,
 				];	
 				array_push($audienceMembers, $audienceMember);
 			 }
@@ -719,7 +721,7 @@ function GetAudience($profileID)
 	if (count($errors) == 0)
 	{
 		$result["totalAudienceMembers"] = count($audienceMembers);
-		$result["audienceMembers"] = $audienceMembers;
+		$result["users"] = $audienceMembers;
 	}
 	else
 	{
