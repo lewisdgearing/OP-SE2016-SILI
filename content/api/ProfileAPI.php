@@ -613,11 +613,25 @@ function GetListeners($profileID)
 	{
 		array_push($errors, $errorCodes["G002"]);
 	}
+	$requestedProfileID = $profileID;
+
+	if (count($request) >= 3)
+	{
+		if (strlen($request[2]) > 0)
+		{
+			$requestedProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);	
+		}
+	}
+
+	if (!isset($requestedProfileID))
+	{
+		return null;
+	}
 	
 	//Process
 	if (count($errors) == 0) //If theres no errors so far
 	{			
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT listenerprofileID FROM Listeners WHERE profileID = ?) LIMIT 10", Array($profileID));
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT listenerprofileID FROM Listeners WHERE profileID = ?) LIMIT 10", Array($requestedProfileID));
 		if (count($queryResult) > 0)
 		{
 			foreach ($queryResult as $user) 
@@ -688,10 +702,25 @@ function GetAudience($profileID)
 		array_push($errors, $errorCodes["G002"]);
 	}
 	
+		$requestedProfileID = $profileID;
+
+	if (count($request) >= 3)
+	{
+		if (strlen($request[2]) > 0)
+		{
+			$requestedProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);	
+		}
+	}
+
+	if (!isset($requestedProfileID))
+	{
+		return null;
+	}
+	
 	//Process
 	if (count($errors) == 0) //If theres no errors so far
 	{	
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT profileID FROM Listeners WHERE listenerprofileID = ?) LIMIT 10", Array($profileID));
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT profileID FROM Listeners WHERE listenerprofileID = ?) LIMIT 10", Array($requestedProfileID));
 		if (count($queryResult) > 0)
 		{
 			foreach ($queryResult as $user) 
