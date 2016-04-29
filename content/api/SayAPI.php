@@ -383,9 +383,9 @@ function GetUserSays($profileID) //Get the says of a user
 	{
 		$offset *= 10;
 
-		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND timePosted >= ? AND profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID = ? AND activity = \"Re-Say\") ORDER BY timePosted DESC LIMIT ?,10";	
+		$saysQuery = "SELECT sayID FROM Says WHERE deleted = 0 AND timePosted >= ? AND sayID NOT IN (SELECT sayID FROM ReportedSays WHERE reporterProfileID = ?) AND profileID = ? OR sayID IN (SELECT sayID FROM Activity WHERE profileID = ? AND activity = \"Re-Say\") ORDER BY timePosted DESC LIMIT ?,10";	
 		
-		$queryResult = $db->rawQuery($saysQuery , Array($timestamp, $requestedProfileID, $requestedProfileID, $offset));
+		$queryResult = $db->rawQuery($saysQuery , Array($timestamp, $profileID, $requestedProfileID, $requestedProfileID, $offset));
 
 		if (count($queryResult) >= 1)
 		{
