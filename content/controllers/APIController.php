@@ -8,15 +8,15 @@ if($status == PHP_SESSION_NONE){
 $controller = true;
 
 //Include all the API file
-require_once ("../config/MysqliDb.php");
+require_once ("../librarys/MysqliDb.php");
 include("../config/dbconnect.inc.php");
 include("../config/errorHandling.php");
-include("../config/APIrequestsNew.php");
+include("../config/APIrequests.php");
 include("../config/config.inc.php");
-include("UserAPI.php");
-include("SayAPI.php");
-include("ProfileAPI.php");
-include("MessageAPI.php");
+include("../api/UserAPI.php");
+include("../api/SayAPI.php");
+include("../api/ProfileAPI.php");
+include("../api/MessageAPI.php");
 
 
 //Check if the request is coming from one of the scripts

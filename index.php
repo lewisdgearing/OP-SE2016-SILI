@@ -9,13 +9,13 @@ if(isset($_GET['request']))
 
 //Check if the user is actually logged in	
 $internal = true; //Used to tell the API that is being used internally
-require_once ("content/config/MysqliDb.php");
-include("content/config/dbconnect.inc.php");
-include("content/config/errorHandling.php");
-include("content/config/config.inc.php");
-include("content/api/UserAPI.php");
-include("content/config/errorHandling.php");
-include("content/config/pageRequests.php");
+require_once("content/librarys/MysqliDb.php");
+require_once("content/config/dbconnect.inc.php");
+require_once("content/config/errorHandling.php");
+require_once("content/config/config.inc.php");
+require_once("content/api/UserAPI.php");
+require_once("content/config/errorHandling.php");
+require_once("content/config/pageRequests.php");
 $loginDetails = CheckLogin(); //Check if the use is logged in
 
 $page = "";

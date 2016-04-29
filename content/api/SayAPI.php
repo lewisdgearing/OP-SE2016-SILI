@@ -24,7 +24,7 @@ if (!isset($internal) && !isset($controller))
 }
 
 //EmojiOne Code
-require('../config/emojione/autoload.php');
+require('../librarys/emojione/autoload.php');
 $Emojione = "\\Emojione\\Client";
 $Emojione = new $Emojione(new Emojione\Ruleset());
 //Set the image type to use
@@ -1074,7 +1074,7 @@ function DeleteSay($profileID)
  */
 function ReportSay($profileID)
 {
-	global $db, $errorCodes, $request;
+	global $db, $errorCodes, $request, $slackBot;
 	
 	$result = array();
 	$errors = array();
@@ -1116,7 +1116,6 @@ function ReportSay($profileID)
 			array_push($errors, $errorCodes["G000"]);
 		}
 
-		$slackBot = "../config/SlackBot.php";
 		if (file_exists($slackBot))
 		{
 			include($slackBot);	
