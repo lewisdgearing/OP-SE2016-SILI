@@ -1,88 +1,24 @@
-<div class="modal fade" id="sayDetailsModal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel">
+<div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			</div>
 			<div class="modal-body">
-				<div class="row originDetails">
-					<div class="col-md-1 originProfilePic"> 
-						<img class="originProfileImg img-circle pull-right" data-src="originProfilePicture" /> 
-					</div>
-					<div class="col-md-11 originMessageDetails">
-						<div class="row"> 
-							<div class="col-md-8">
-								<span data-content="originFirstName"></span> <span data-content="originLastName"></span> (<span data-content="originUserName"></span>)
-							</div>
-							<div class="col-md-4 text-right">
-								<span data-content="timePosted"></span> 
-							</div>
-						</div>
-						<div class="row"> 
-							<div class="col-md-12 originMessage">
-								<span data-content="originMessage"></span>
-							</div>
-						</div>
-						<div class="row"> 
-							<div class="col-md-2">
-							   <i class="icons applaud flaticon-applaud" data-toggle="tooltip" data-placement="top" title="Applaud"></i><span class="applaud" data-content="originApplauds"></span>
-							</div> 
-							<div class="col-md-2">
-								<i class="icons reSay flaticon-resay" data-toggle="tooltip" data-placement="top" title="Re-Say"></i><span class="reSay" data-content="originResays"></span>
-							</div> 
-							<div class="col-md-2">
-								<i class="icons boo flaticon-boo" data-toggle="tooltip" data-placement="top" title="Boo"></i><span class="boo" data-content="originBoos"></span>
-							</div> 
-							<div class="col-md-6"></div> 
-						</div> 
-					</div>
-				</div>
 				
-				<div class="row sayDetails">
-					<div class="col-md-1 sayProfilePic"> 
-						<img class="sayProfileImg img-circle pull-right" data-src="profilePicture" /> 
-					</div> 
-					<div class="col-md-11 sayMessageDetails">
-						<div class="row"> 
-							<div class="col-md-8">
-								<span data-content="firstName"></span> <span data-content="lastName"></span> (<span data-content="userName"></span>)
-							</div>
-							<div class="col-md-4 text-right">
-								<span data-content="timePosted"></span> 
-							</div>
-						</div>
-						<div class="row"> 
-							<div class="col-md-12 sayMessage">
-								<span data-content="message"></span>
-							</div>
-						</div>
-						<div class="row"> 
-							<div class="col-md-2">
-							   <i class="icons applaud flaticon-applaud" data-toggle="tooltip" data-placement="top" title="Applaud"></i><span class="applaud" data-content="applauds"></span>
-							</div> 
-							<div class="col-md-2">
-								<i class="icons reSay flaticon-resay" data-toggle="tooltip" data-placement="top" title="Re-Say"></i><span class="reSay" data-content="resays"></span>
-							</div> 
-							<div class="col-md-2">
-								<i class="icons boo flaticon-boo" data-toggle="tooltip" data-placement="top" title="Boo"></i><span class="boo" data-content="boos"></span>
-							</div> 
-							<div class="col-md-6"></div> 
-						</div> 
-					</div>
-				</div>
-				<!-- COMMENTS GO IN HERE -->
-				<div class="commentFeed">
+				<!-- CONVERSATIONS GO IN HERE -->
+				<div class="messageFeed">
 					
 				</div>				
-				<form class="form-horizontal comment-form" accept-charset="utf-8">
-					<div class="form-group newComment">
-						<label for="newComment" class="sr-only">Enter Your Comment</label>
-						<textarea placeholder="What have you got to say?" name="commentBox" id="newComment" rows="4" class="commentBox"></textarea>
+				<form class="form-horizontal message-form" accept-charset="utf-8">
+					<div class="form-group newMessage">
+						<label for="newComment" class="sr-only">Enter Your Message</label>
+						<textarea placeholder="What have you got to say?" name="messageBox" id="newMessage" rows="4" class="messageBox"></textarea>
 					</div>
 					<div class = "row">
 						<div class="col-md-4"></div>
 							<div class="col-md-4">
-								<button class="btn btn-default sayButton" type="submit">Leave your Comment!</button>
+								<button class="btn btn-default sayButton" type="submit">Holler!!</button>
 							</div>
 						<div class="col-md-4"></div>
 					</div>

@@ -361,7 +361,7 @@ function fetchConversations(){
 		success: function(data){
 			console.log(data);
 			$.each(data.messages, function(index, element){
-				$(".conversations").loadTemplate("content/templates/conversation.html",
+				$(".conversationFeed").loadTemplate("content/templates/conversation.html",
 				{
 					firstName: element["firstName"],
 				    lastName: element["lastName"],
@@ -369,17 +369,36 @@ function fetchConversations(){
 					message: element["message"],
 					profilePicture: element["profileImage"],
 					timePosted: moment(element["timePosted"]).format('lll'),
-					profileLink: element["profileLink"],
-				}, { append: true, afterInsert: function (elem) {
-					assignActionStatus(elem, element);
-				}})
+				}, { append: true })
 			})
 		}
 	})
 }
 
 function fetchMessages(data, userName){
-
+		return $.ajax({
+		dataType: "json",
+		url: "API/message/user/"
+		success: function(data) {
+			$(".messageModal").loadTemplate("content/templates/message.html",
+			{
+				firstName: data.say["firstName"],
+			    lastName: data.say["lastName"],
+			    userName: data.say["userName"],
+				profilePicture: data.say["profileImage"],
+			}), { async: false };
+			$.each(data.messages, function(index, element){
+				$(".messageFeed").loadTemplate("content/templates/singleMessage.html",
+				{
+					singleMessage: element["message"],
+					timeStamp: element["timeSent"],
+				}, { append: true, afterInsert: function(elem) {
+					// MAKE FUNCTION HERE FOR PUSH MESSAGE LEFT OR RIGHT
+				}})
+				}
+			}
+		}
+	});
 }
 
 function addMessage(data, userName){
@@ -690,11 +709,11 @@ function GetActionUser(sayID, action) {
 	
 }
 
-function GetProfileListeners(action, name, userProfileId) {
+function GetProfileListeners(action, name, userProfileID) {
 	$.ajax({
 		dataType: "json",
 		async: false,
-		url: "API/profile/" + action + "/" + userProfileId,
+		url: "API/profile/" + action + "/" + userProfileID,
 		success: function(data) {
 			var actionHeader = action;
 			if (action == "listeners")
@@ -963,11 +982,11 @@ $("document").ready(function() {
 	});
 
 	$(document).on('click', '.listeningUsers, .userAudience', function(){
-		var $el = $(this).parent().parent().parent();		
+		var $el = $(this).parent().parent();		
 		var action = $(this).data('action');
 		var name = $(document).find(".profile-name").text();
-		var userProfileId = $el.data('userid');		
-		GetProfileListeners(action, name, userProfileId);
+		var userProfileID = $el.data('userid');		
+		GetProfileListeners(action, name, userProfileID);
 		$('#profileModal').modal('show');
 	});
 
