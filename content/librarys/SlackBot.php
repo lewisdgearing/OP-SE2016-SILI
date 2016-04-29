@@ -114,13 +114,10 @@ function SlackBot_ReportSay($sayID, $sayMessage, $posterUserName, $reporterUserN
 
 /**
  *
- * Format the Array into JSON adding the 
+ * Format the Array into JSON, and formatting it so slack will understand it 
  *
- * @param    string $sayID 
- * @param    string $sayMessage
- * @param    string $posterUserName
- * @param    string $reporterUserName
- * @return   string the result
+ * @param    string $dataArray the array of data
+ * @return   string the data to send to slack
  *
  */
 function FormatForSlack($dataArray)
