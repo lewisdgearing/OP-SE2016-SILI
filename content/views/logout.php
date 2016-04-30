@@ -1,5 +1,5 @@
 <?php
-deleteRememberMeCookie($mysqli, $userID);
+deleteRememberMeCookie($db, $userID);
 $_SESSION = array();
 session_destroy();
 

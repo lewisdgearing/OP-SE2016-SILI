@@ -347,7 +347,7 @@ function UserRegister()
 		}
 		else
 		{
-			$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userName = ? AND profileID != ?", Array($userName, $profileID));
+			$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userName = ?", Array($userName));
 			if (count($queryResult) > 0)
 			{
 				array_push($errors, $errorCodes["R016"]);

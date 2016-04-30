@@ -127,7 +127,7 @@ function fetchSays(){
 		url: "API/say/" + currentPage + "/" + timeNow,
 		success: function(data) {	
 			totalPages = totalPages == 0 ? data["totalPages"] : totalPages; 
-			if (totalPages == 1)
+			if (totalPages == 1 || totalPages == 0)
 			{
 				$("#loadSays").remove();
 			}
@@ -334,8 +334,6 @@ function fetchComments(sayID){
 }
 
 function addComment(data, sayID){
-	console.log(sayID);
-	console.log(data);
 	$.ajax({
 		type: "POST",
 		dataType: "json",
@@ -363,7 +361,6 @@ function fetchConversations(){
 		dataType: "json",
 		url: "API/message/",
 		success: function(data){
-			console.log(data);
 			$.each(data.messages, function(index, element){
 				$(".conversationFeed").loadTemplate("content/templates/conversation.html",
 				{
@@ -877,7 +874,6 @@ var userLocationOptions = {
 		},
 		onChooseEvent: function() {
 			var index = $("#personalLocation").getSelectedItemIndex();
-			console.log($("#personalLocation").getItemData(index));
 			//window.location = $("#personalLocation").getItemData(index).profileLink;
 		}
   }
@@ -899,10 +895,8 @@ angular.module('app', ['ngImgCrop'])
       };
 
     $scope.onLoadError=function() {
-      console.log('onLoadError fired');
     };
     $scope.onLoadDone=function() {
-      console.log('onLoadDone fired');
       $('#profileImage-form').modal('show');
     };
       reader.readAsDataURL(file);

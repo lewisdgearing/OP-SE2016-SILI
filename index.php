@@ -16,6 +16,7 @@ require_once("content/config/config.inc.php");
 require_once("content/api/UserAPI.php");
 require_once("content/config/errorHandling.php");
 require_once("content/config/pageRequests.php");
+require_once("content/librarys/SlackBot.php");
 $loginDetails = CheckLogin(); //Check if the use is logged in
 
 $page = "";
