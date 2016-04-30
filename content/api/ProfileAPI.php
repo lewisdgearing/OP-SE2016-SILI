@@ -75,7 +75,8 @@ function CreateProfile($userID, $firstName, $lastName, $userName)
             "userID" => $userID,
             "firstName" => $firstName,
 			"lastName" => $lastName,
-			"userName" => $userName
+			"userName" => $userName,
+			"joinDate" => date("Y-m-d H:i:s")
 	);
 	$queryResult = $db->insert("Profile", $data);
 }
