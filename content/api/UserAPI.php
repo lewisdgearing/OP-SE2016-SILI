@@ -358,7 +358,7 @@ function UserRegister()
 	//Process
 	if (count($errors) == 0) //If no errors add the user to the system
 	{
-		$userName = filter_var($_POST['userName'], FILTER_SANITIZE_STRING);
+		$userName = strtoupper(filter_var($_POST['userName'], FILTER_SANITIZE_STRING));
 		$firstName = filter_var($_POST['firstName'], FILTER_SANITIZE_STRING);
 		$lastName = filter_var($_POST['lastName'], FILTER_SANITIZE_STRING);
 		
