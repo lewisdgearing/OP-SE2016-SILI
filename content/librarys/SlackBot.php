@@ -47,6 +47,21 @@ function PostToSlack($data)
 
 /**
  *
+ * Format the Array into JSON, and formatting it so slack will understand it 
+ *
+ * @param    string $dataArray the array of data
+ * @return   string the data to send to slack
+ *
+ */
+function FormatForSlack($dataArray)
+{
+  $data = "payload=" . json_encode($dataArray); 
+
+  return $data;
+}
+
+/**
+ *
  * Report a Say to the SLACK channel
  *
  * @param    string $sayID 
@@ -110,18 +125,17 @@ function SlackBot_ReportSay($sayID, $sayMessage, $posterUserName, $reporterUserN
   PostToSlack($data);
 }
 
-/**
- *
- * Format the Array into JSON, and formatting it so slack will understand it 
- *
- * @param    string $dataArray the array of data
- * @return   string the data to send to slack
- *
- */
-function FormatForSlack($dataArray)
+function SlackBot_ErrorOutput($error)
 {
-  $data = "payload=" . json_encode($dataArray); 
+  $dataArray = array();
 
-  return $data;
+  $dataArray["username"] = "SILI on Kate"; //The Username to be displayed on Slack (if null will default to the one set in slack)
+  $dataArray["icon_url"] = "https://cdnjs.cloudflare.com/ajax/libs/emojione/2.1.4/assets/png/1f5a5.png"; //The Icon URL to be displayed on Slack (if null will default to the one set in slack)
+  $dataArray["channel"] = "#error-log"; //The Username to be displayed on Slack (if null will default to the one set in slack)
+  $dataArray["text"] = "```$error```";
+
+  $data = FormatForSlack($dataArray);
+
+  PostToSlack($data);
 }
 ?>

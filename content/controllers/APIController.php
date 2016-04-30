@@ -9,15 +9,15 @@ $controller = true;
 
 //Include all the API file
 require_once ("../librarys/MysqliDb.php");
-include("../config/dbconnect.inc.php");
-include("../config/errorHandling.php");
-include("../config/APIrequests.php");
-include("../config/config.inc.php");
-include("../api/UserAPI.php");
-include("../api/SayAPI.php");
-include("../api/ProfileAPI.php");
-include("../api/MessageAPI.php");
-
+require_once("../config/dbconnect.inc.php");
+require_once("../config/config.inc.php");
+require_once("../config/errorHandling.php");
+require_once("../config/APIrequests.php");
+require_once("../api/UserAPI.php");
+require_once("../api/SayAPI.php");
+require_once("../api/ProfileAPI.php");
+require_once("../api/MessageAPI.php");
+require_once("../librarys/SlackBot.php");
 
 //Check if the request is coming from one of the scripts
 if (is_ajax())

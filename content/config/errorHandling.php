@@ -1,4 +1,40 @@
 <?php
+function exception_handler($exception) 
+{
+	$trace = json_encode($exception->getTrace());
+	SlackBot_ErrorOutput($exception->getMessage() ."\n\nStack_Trace\n". $trace);
+
+  	http_response_code(500);
+  	die();
+}
+
+function error_handler($errno, $errstr, $errfile, $errline)
+{
+	$errorText = "";
+	switch ($errno) {
+    case E_WARNING:
+        $errorText = "'''Warning:''' $errstr on line $errline in file $errfile\n";
+        break;
+
+    case E_NOTICE:
+        $errorText = "'''Notice:''' [$errno] $errstr on line $errline in file $errfile\n";
+        break;
+
+    default:
+        $errorText = "[$errno] $errstr\n on line $errline in file $errfile";
+        break;
+    }
+
+   	SlackBot_ErrorOutput($errorText);
+
+    http_response_code(500);
+    /* Don't execute PHP internal error handler */
+    return true;
+}
+
+set_exception_handler('exception_handler');
+set_error_handler('error_handler');
+
 $errorCodes = array();
 //Generic Errors
 $errorCodes["G000"] = [

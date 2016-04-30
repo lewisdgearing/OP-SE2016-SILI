@@ -198,7 +198,7 @@ function GetSays($profileID) //Returns all the says based of the people listened
  * @param    int  $profileID 
  * @param    int  $timestamp the time we are calcuating says from
  * @param    string $view the type of view (says|profile|comments)
- * @return   array Containing the say
+ * @return   int the number of pages there will be
  *
  */
 function CalcuateSaysPages($profileID, $timestamp, $view)
@@ -1073,7 +1073,7 @@ function DeleteSay($profileID)
  */
 function ReportSay($profileID)
 {
-	global $db, $errorCodes, $request, $slackBot;
+	global $db, $errorCodes, $request;
 	
 	$result = array();
 	$errors = array();
@@ -1115,21 +1115,15 @@ function ReportSay($profileID)
 			array_push($errors, $errorCodes["G000"]);
 		}
 
-		if (file_exists($slackBot))
-		{
-			include($slackBot);	
-			//Get the Details of the say
-			$say = FetchSay($sayID);
+		//Get the Details of the say
+		$say = FetchSay($sayID);
 
-			$sayMessage = $say["messageClean"];
-			$posterUserName = $say["userName"];
-			$reporterUserName = GetUserName($profileID);
+		$sayMessage = $say["messageClean"];
+		$posterUserName = $say["userName"];
+		$reporterUserName = GetUserName($profileID);
 
-			
-			SlackBot_ReportSay($sayID, $sayMessage, $posterUserName, $reporterUserName);
-		}
-
-
+		
+		SlackBot_ReportSay($sayID, $sayMessage, $posterUserName, $reporterUserName);
 	}
 	
 	if (count($errors) == 0)
