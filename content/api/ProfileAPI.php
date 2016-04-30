@@ -615,11 +615,29 @@ function GetListeners($profileID)
 	}
 	$requestedProfileID = $profileID;
 
-	if (count($request) >= 3)
+	$timestamp = microtime();
+	$offset = 0;
+	
+	if (count($request) == 3)
 	{
 		if (strlen($request[2]) > 0)
 		{
 			$requestedProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);	
+		}
+	}
+	elseif (count($request) >= 5)
+	{
+		if (strlen($request[2]) > 0)
+		{
+			$requestedProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);	
+		}
+		if (strlen($request[3]) > 0)
+		{
+			$offset = filter_var($request[3], FILTER_SANITIZE_NUMBER_INT);	
+		}
+		if (strlen($request[4]) > 0)
+		{
+			$timestamp = filter_var($request[4], FILTER_SANITIZE_NUMBER_INT);	
 		}
 	}
 
@@ -630,8 +648,9 @@ function GetListeners($profileID)
 	
 	//Process
 	if (count($errors) == 0) //If theres no errors so far
-	{			
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT listenerprofileID FROM Listeners WHERE profileID = ?) LIMIT 10", Array($requestedProfileID));
+	{		
+		$offset *= 10;
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT listenerprofileID FROM Listeners WHERE profileID = ? AND dateFollowed >= ? ORDER BY dateFollowed) LIMIT ?,10", Array($requestedProfileID, $timestamp, $offset));
 		if (count($queryResult) > 0)
 		{
 			foreach ($queryResult as $user) 
@@ -657,11 +676,12 @@ function GetListeners($profileID)
 			}				
  
 		}
+		$totalPages = CalculateUserPages($requestedProfileID, $timestamp, "listeners");
 	}
 
 	if (count($errors) == 0)
 	{
-		$result["totalListeners"] = count($listeners);
+		$result["totalPages"] = $totalPages;
 		$result["users"] = $listeners;
 	}
 	else
@@ -704,11 +724,29 @@ function GetAudience($profileID)
 	
 		$requestedProfileID = $profileID;
 
-	if (count($request) >= 3)
+	$timestamp = microtime();
+	$offset = 0;
+	
+	if (count($request) == 3)
 	{
 		if (strlen($request[2]) > 0)
 		{
 			$requestedProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);	
+		}
+	}
+	elseif (count($request) >= 5)
+	{
+		if (strlen($request[2]) > 0)
+		{
+			$requestedProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);	
+		}
+		if (strlen($request[3]) > 0)
+		{
+			$offset = filter_var($request[3], FILTER_SANITIZE_NUMBER_INT);	
+		}
+		if (strlen($request[4]) > 0)
+		{
+			$timestamp = filter_var($request[4], FILTER_SANITIZE_NUMBER_INT);	
 		}
 	}
 
@@ -720,7 +758,8 @@ function GetAudience($profileID)
 	//Process
 	if (count($errors) == 0) //If theres no errors so far
 	{	
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT profileID FROM Listeners WHERE listenerprofileID = ?) LIMIT 10", Array($requestedProfileID));
+		$offset *= 10;
+		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT profileID FROM Listeners WHERE listenerprofileID = ? AND dateFollowed >= ? ORDER BY dateFollowed) LIMIT ?,10", Array($requestedProfileID, $timestamp, $offset));
 		if (count($queryResult) > 0)
 		{
 			foreach ($queryResult as $user) 
@@ -744,12 +783,13 @@ function GetAudience($profileID)
 				];	
 				array_push($audienceMembers, $audienceMember);
 			 }
-		}						
+		}	
+		$totalPages = CalculateUserPages($requestedProfileID, $timestamp, "audience");
 	}
 
 	if (count($errors) == 0)
 	{
-		$result["totalAudienceMembers"] = count($audienceMembers);
+		$result["totalPages"] = $totalPages;
 		$result["users"] = $audienceMembers;
 	}
 	else
@@ -758,6 +798,54 @@ function GetAudience($profileID)
 	}
 	
 	return $result;
+}
+
+/**
+ *
+ * Returns the total number of users that follow the given user
+ *
+ *
+ * @param    int  $profileID 
+ * @param    int  $timestamp the time we are calcuating users from
+ * @param    string $view the type of view (listeners|audience)
+ * @return   int the number of pages there will be
+ *
+ */
+function CalculateUserPages($profileID, $timestamp, $view)
+{
+	global $db;
+	$totalSays = 0;
+
+	if ($view == "listeners")
+	{
+		$countQuery = "SELECT count(*) AS totalUsers FROM Listeners WHERE profileID = ? AND dateFollowed >= ?";
+		$queryResult = $db->rawQuery($countQuery, Array($profileID, $timestamp));
+	} 
+	elseif ($view == "audience")
+	{
+		$countQuery = "SELECT count(*) AS totalUsers FROM Listeners WHERE listenerprofileID = ? AND dateFollowed >= ?";
+		$queryResult = $db->rawQuery($countQuery, Array($profileID, $timestamp));
+	}
+	else
+	{
+		return null;
+	}
+
+
+	if (count($queryResult) >= 1)
+	{
+		$totalSays = $queryResult[0]["totalUsers"];
+	}
+
+	$nbrPages = floor($totalSays / 10);
+
+	if ($totalSays % 10 > 0)
+	{
+		$nbrPages += 1;
+	}
+
+
+	return $nbrPages;
 }
 
 /**

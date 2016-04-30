@@ -6,6 +6,10 @@ var loggedIn = false;
 var timeNow = moment().valueOf();
 var currentPage = 0;
 var totalPages = 0;
+var currentUserPage = 0;
+var totalUserPages = 0;
+var currentAction = "";
+var currentViewedProfileID = "";
 
 window.emojioneVersion = "2.1.1";
 
@@ -123,7 +127,7 @@ function fetchSays(){
 		url: "API/say/" + currentPage + "/" + timeNow,
 		success: function(data) {	
 			totalPages = totalPages == 0 ? data["totalPages"] : totalPages; 
-			if (totalPages == 0)
+			if (totalPages == 1)
 			{
 				$("#loadSays").remove();
 			}
@@ -193,7 +197,7 @@ function fetchUserSays(reqUserName){
 		url: "API/say/user/" + reqUserName + "/" + currentPage + "/" + timeNow,
 		success: function(data) {	
 			totalPages = totalPages == 0 ? data["totalPages"] : totalPages; 
-			if (totalPages == 0)
+			if (totalPages == 1)
 			{
 				$("#loadSaysProfile").remove();
 			}
@@ -378,7 +382,7 @@ function fetchConversations(){
 function fetchMessages(data, userName){
 		return $.ajax({
 		dataType: "json",
-		url: "API/message/user/"
+		url: "API/message/user/",
 		success: function(data) {
 			$(".messageModal").loadTemplate("content/templates/message.html",
 			{
@@ -386,7 +390,7 @@ function fetchMessages(data, userName){
 			    lastName: data.say["lastName"],
 			    userName: data.say["userName"],
 				profilePicture: data.say["profileImage"],
-			}), { async: false };
+			}, { async: false });
 			$.each(data.messages, function(index, element){
 				$(".messageFeed").loadTemplate("content/templates/singleMessage.html",
 				{
@@ -394,9 +398,8 @@ function fetchMessages(data, userName){
 					timeStamp: element["timeSent"],
 				}, { append: true, afterInsert: function(elem) {
 					// MAKE FUNCTION HERE FOR PUSH MESSAGE LEFT OR RIGHT
-				}})
-				}
-			}
+				}});
+			});
 		}
 	});
 }
@@ -713,8 +716,12 @@ function GetProfileListeners(action, name, userProfileID) {
 	$.ajax({
 		dataType: "json",
 		async: false,
-		url: "API/profile/" + action + "/" + userProfileID,
+		url: "API/profile/" + action + "/" + userProfileID + "/" + currentUserPage + "/" + timeNow,
 		success: function(data) {
+			currentUserPage = 0;
+			totalUserPages = data["totalPages"];
+			currentViewedProfileID = userProfileID;
+			currentAction = action;
 			var actionHeader = action;
 			if (action == "listeners")
 			{
@@ -729,7 +736,10 @@ function GetProfileListeners(action, name, userProfileID) {
 					profileHeader:actionHeader,
 				}, {async: false});
 
-
+			if (totalUserPages == 1)
+			{
+				$("#loadMoreUsers").remove();
+			}
 			$.each(data.users, function(index, element) {	
 				$(".profileFeed").loadTemplate("content/templates/activityDisplay.html",
 					{
@@ -747,6 +757,31 @@ function GetProfileListeners(action, name, userProfileID) {
 	});
 	
 	
+}
+
+function fetchMoreUsers()
+{
+	currentUserPage = currentUserPage + 1;
+	return $.ajax({
+		dataType: "json",
+		async: false,
+		url: "API/profile/" + currentAction + "/" + currentViewedProfileID + "/" + currentUserPage + "/" + timeNow,
+		success: function(data) {		
+			$.each(data.users, function(index, element) {	
+				$(".profileFeed").loadTemplate("content/templates/activityDisplay.html",
+					{
+						profileLink:element["profileLink"],
+						profilePicture:element["profileImage"],
+						firstName:element["firstName"],
+						lastName:element["lastName"],
+						userName:element["userName"],
+					},{append: true});				
+				
+			});
+			
+			
+		}
+	});
 }
 
 function AccountSettingsUpdate(modal)
@@ -1050,6 +1085,16 @@ $("document").ready(function() {
 	  	fetchMoreSays().done( function() { 
 	  		$this.button('reset');
 	  		if (currentPage + 1 == totalPages) {
+	  			$this.remove();
+	  		} });
+	});
+	
+	$(document).on('click' , '#loadMoreUsers', function() {
+	    var $this = $(this);
+	  	$this.button('loading');
+	  	fetchMoreUsers().done( function() { 
+	  		$this.button('reset');
+	  		if (currentUserPage + 1 == totalUserPages) {
 	  			$this.remove();
 	  		} });
 	});
