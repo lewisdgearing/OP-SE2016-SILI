@@ -13,11 +13,11 @@ function error_handler($errno, $errstr, $errfile, $errline)
 	$errorText = "";
 	switch ($errno) {
     case E_WARNING:
-        $errorText = "'''Warning:''' $errstr on line $errline in file $errfile\n";
+        $errorText = "Warning:  $errstr on line $errline in file $errfile\n";
         break;
 
     case E_NOTICE:
-        $errorText = "'''Notice:''' [$errno] $errstr on line $errline in file $errfile\n";
+        $errorText = "Notice: $errstr on line $errline in file $errfile\n";
         break;
 
     default:
