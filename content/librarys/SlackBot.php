@@ -68,7 +68,6 @@ function FormatForSlack($dataArray)
  * @param    string $sayMessage
  * @param    string $posterUserName
  * @param    string $reporterUserName
- * @return   string the result
  *
  */
 function SlackBot_ReportSay($sayID, $sayMessage, $posterUserName, $reporterUserName)
@@ -138,4 +137,5 @@ function SlackBot_ErrorOutput($error)
 
   PostToSlack($data);
 }
+
 ?>
