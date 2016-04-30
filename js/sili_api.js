@@ -502,7 +502,8 @@ function requestUserSettings() {
 			    lastName: data.userProfile["lastName"],
 			    userName: data.userProfile["userName"],
 				dob: data.userProfile["dob"],
-				gender: data.userProfile["gender"]
+				gender: data.userProfile["gender"],
+				location: data.userProfile["location"]
 			}, { append: true, async: false });
 				
 			$("#profileModals").loadTemplate("content/templates/userBio.html",
@@ -510,7 +511,7 @@ function requestUserSettings() {
 				        bio: data.userProfile["userBio"]
 				}, { append: true });
 				
-			$( "#personal-form" ).on('shown.bs.modal', function(){
+			$( "#personal-form").on('shown.bs.modal', function(){
 				$("#personalLocation").easyAutocomplete(userLocationOptions);
 			});
 			
