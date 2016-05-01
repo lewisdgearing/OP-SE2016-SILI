@@ -16,3 +16,24 @@ errors["U014"] = {"field":"ConfirmPassword", "errorMessage":"Please confirm your
 errors["U015"] = {"field":"UserName", "errorMessage":"Please enter a UserName"};
 errors["U016"] = {"field":"UserName", "errorMessage":"Your UserName does not meet the requirements"};
 errors["U017"] = {"field":"UserName", "errorMessage":"The UserName has already been used, please choose another"};
+
+//ProfileAPI Errors
+errors["P006"] = {"field":"personalFirstName", "errorMessage":"Please enter your First Name"};
+errors["P007"] = {"field":"personalLastName", "errorMessage":"Please enter your Last Name"};
+errors["P008"] = {"field":"personalUserName", "errorMessage":"Please enter your UserName"};
+errors["P009"] = {"field":"personalUserName", "errorMessage":"Your UserName does not meet the requirements"};
+errors["P010"] = {"field":"personalDob", "errorMessage":"Please enter your Date of Birth"};
+errors["P011"] = {"field":"personalGender", "errorMessage":"Please select your Gender"};
+errors["P012"] = {"field":"personalUserName", "errorMessage":"The UserName has already been used, please choose another"};
+errors["P013"] = {"field":"currentPassword", "errorMessage":"Please enter your Current Password"};
+errors["P014"] = {"field":"newPassword", "errorMessage":"Your New password does not meet the complexity requirements"};
+errors["P015"] = {"field":"currentPassword", "errorMessage":"Incorrect current password entered"};
+errors["P016"] = {"field":"userBio", "errorMessage":"Please shorten your Bio as it excedes the limit of 500 characters"};
+errors["P017"] = {"field":"newEmail", "errorMessage":"Please Enter your new email"};
+errors["P018"] = {"field":"newEmail", "errorMessage":"Please Enter a vaild new email"};
+errors["P019"] = {"field":"confirmNewEmail", "errorMessage":"Please confirm your new email"};
+errors["P020"] = {"field":"confirmNewEmail", "errorMessage":"Confirm new email doesnt match New Email Address"};
+errors["P021"] = {"field":"newEmail", "errorMessage":"New email address has already been used by another user"};
+errors["P022"] = {"field":"confirmNewPassword", "errorMessage":"Confrim new password does not match confirm new password"};
+errors["P023"] = {"field":"newPassword", "errorMessage":"Please enter your new password"};
+errors["P024"] = {"field":"confirmNewPassword", "errorMessage":"Please confirm your new password"};

@@ -28,17 +28,8 @@ function userLogin(){
 			$(".loginPassword .help-block").text("");
 			data = $.parseJSON(jqXHR.responseText);
 			$.each(data.errors, function(index, element) {
-				if(element.code == "L001" || element.code == "L007")
-				{
-					$(".container-fluid").append("<div class=\"modal fade\" id=\"myModal\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"myModalLabel\"><div class=\"modal-dialog\" role=\"document\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button><h4 class=\"modal-title\" id=\"myModalLabel\">Error</h4></div><div class=\"modal-body\">An error occurred while trying to Login, Please try again.</div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div> </div>");
-					$('#myModal').modal('show');
-					return false;
-				}
-				else 
-				{
-					$(".login" + errors[element.code].field).addClass("has-error");
-					$(".login" + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
-				}
+				$(".login" + errors[element.code].field).addClass("has-error");
+				$(".login" + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
 			});
 		},				
 	  success: function(data) {	
@@ -71,17 +62,8 @@ function userRegister(){
 			$(".registerConfirmPassword .help-block").text("");
 			data = $.parseJSON(jqXHR.responseText);
 			$.each(data.errors, function(index, element) {
-				if(element.code == "R001" || element.code == "R007")
-				{
-					$(".container-fluid").append("<div class=\"modal fade\" id=\"myModal\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"myModalLabel\"><div class=\"modal-dialog\" role=\"document\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button><h4 class=\"modal-title\" id=\"myModalLabel\">Error</h4></div><div class=\"modal-body\">An error occurred while trying to Register, Please try again.</div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div> </div>");
-					$('#myModal').modal('show');
-					return false;
-				}
-				else 
-				{
-					$(".register" + errors[element.code].field).addClass("has-error");
-					$(".register" + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
-				}
+				$(".register" + errors[element.code].field).addClass("has-error");
+				$(".register" + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
 			});
 		},
 		success: function(data) {	
@@ -577,7 +559,22 @@ function ProfileEdit(data)
 	  url: "API/profile/",
 	  data: data,
 	  error: function(jqXHR, textStatus, errorThrown) {
-			
+			//reset all the form fields
+			$(".personalFirstName").removeClass("has-error");
+			$(".personalFirstName .help-block").text("");
+			$(".personalLastName").removeClass("has-error");
+			$(".personalLastName .help-block").text("");
+			$(".personalUserName").removeClass("has-error");
+			$(".personalUserName .help-block").text("");
+			$(".personalDob").removeClass("has-error");
+			$(".personalDob .help-block").text("");
+			$(".personalGender").removeClass("has-error");
+			$(".personalGender .help-block").text("");
+			data = $.parseJSON(jqXHR.responseText);
+			$.each(data.errors, function(index, element) {
+			$("." + errors[element.code].field).addClass("has-error");
+			$("." + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
+			});
 		},				
 	  success: function(data) {	
 			AccountSettingsUpdate('#personal-form');
@@ -594,7 +591,18 @@ function ProfilePasswordChange(data)
 	  url: "API/profile/password",
 	  data: data,
 	  error: function(jqXHR, textStatus, errorThrown) {
-			
+			//reset all the form fields
+			$(".currentPassword").removeClass("has-error");
+			$(".currentPassword .help-block").text("");
+			$(".newPassword").removeClass("has-error");
+			$(".newPassword .help-block").text("");
+			$(".confirmNewPassword").removeClass("has-error");
+			$(".confirmNewPassword .help-block").text("");
+			data = $.parseJSON(jqXHR.responseText);
+			$.each(data.errors, function(index, element) {
+			$("." + errors[element.code].field).addClass("has-error");
+			$("." + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
+			});
 		},				
 	  success: function(data) {	
 			AccountSettingsUpdate('#changePassword-form');
@@ -611,7 +619,18 @@ function ProfileEmailChange(data)
 	  url: "API/profile/email",
 	  data: data,
 	  error: function(jqXHR, textStatus, errorThrown) {
-			
+			//reset all the form fields
+			$(".currentPassword").removeClass("has-error");
+			$(".currentPassword .help-block").text("");
+			$(".newEmail").removeClass("has-error");
+			$(".newEmail .help-block").text("");
+			$(".confirmNewEmail").removeClass("has-error");
+			$(".confirmNewEmail .help-block").text("");
+			data = $.parseJSON(jqXHR.responseText);
+			$.each(data.errors, function(index, element) {
+			$("." + errors[element.code].field).addClass("has-error");
+			$("." + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
+			});
 		},				
 	  success: function(data) {	
 			AccountSettingsUpdate('#changeEmail-form');
@@ -628,7 +647,14 @@ function ProfileBioEdit(data)
 	  url: "API/profile/bio",
 	  data: data,
 	  error: function(jqXHR, textStatus, errorThrown) {
-			
+			//reset all the form fields
+			$(".userBio").removeClass("has-error");
+			$(".userBio .help-block").text("");
+			data = $.parseJSON(jqXHR.responseText);
+			$.each(data.errors, function(index, element) {
+			$("." + errors[element.code].field).addClass("has-error");
+			$("." + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
+			});
 		},				
 	  success: function(data) {	
 			AccountSettingsUpdate('#userBio-form');
