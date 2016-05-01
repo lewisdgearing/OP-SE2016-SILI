@@ -826,14 +826,13 @@ function GIFSearch(searchPhrase)
 {
 	$.ajax({
 		dataType: "json",
-		url: "http://api.giphy.com/v1/gifs/search?q=" + encodeURIComponent(searchPhrase) + "&api_key=dc6zaTOxFJmzC ",
+		url: "http://api.giphy.com/v1/gifs/search?q=" + encodeURIComponent(searchPhrase) + "&rating=g&api_key=dc6zaTOxFJmzC ",
 		success: function(data) {	
 			$(".gifs").empty();
 			$(".gifs").append("<option value=\"\"></option>");
 			$.each(data.data, function(index, element) {	
 				var image = element.images.fixed_height_small["url"];
 				var id = element["id"];
-				console.log(image);
 				$(".gifs").append("<option data-img-src=\"" + image + "\" value=\"" + id +"\">" + id +"</option>");				
 			});
 			$(".gifs").imagepicker();
@@ -842,6 +841,24 @@ function GIFSearch(searchPhrase)
 	 
 }
 
+function GIFTrending()
+{
+	$.ajax({
+		dataType: "json",
+		url: "http://api.giphy.com/v1/gifs/trending?rating=g&api_key=dc6zaTOxFJmzC",
+		success: function(data) {	
+			$(".gifs").empty();
+			$(".gifs").append("<option value=\"\"></option>");
+			$.each(data.data, function(index, element) {	
+				var image = element.images.fixed_height_small["url"];
+				var id = element["id"];
+				$(".gifs").append("<option data-img-src=\"" + image + "\" value=\"" + id +"\">" + id +"</option>");				
+			});
+			$(".gifs").imagepicker();
+		}
+	});
+	 
+}
 
 getUserDetials().done(function() {
 	if(loggedIn) {
@@ -1159,11 +1176,5 @@ $("document").ready(function() {
 
 	$("body").tooltip({
 		selector: '[data-toggle="tooltip"]'
-	});
-
-	$("#gifSearch").on('change', function () {
-		var searchPhrase = $(this).val();
-		console.log(searchPhrase);
-		GIFSearch(searchPhrase);
 	});
 });

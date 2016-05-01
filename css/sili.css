@@ -371,3 +371,9 @@ input[type=file].profileImageUpload
 	height: 10ex;
 	width: 10ex;
 }
+
+.gifResults
+{
+	max-height: 190px;
+	overflow-y: auto;
+}
