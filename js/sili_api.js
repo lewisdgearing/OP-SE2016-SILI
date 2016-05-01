@@ -822,6 +822,25 @@ function AccountSettingsUpdate(modal)
 	getUserSettings();
 }
 
+function GIFSearch(searchPhrase)
+{
+	$.ajax({
+		dataType: "json",
+		url: "http://api.giphy.com/v1/gifs/search?q=" + encodeURIComponent(searchPhrase) + "&api_key=dc6zaTOxFJmzC ",
+		success: function(data) {	
+			$(".gifs").empty();
+			$.each(data.data, function(index, element) {	
+				var image = element.images.fixed_height_small["url"];
+				console.log(image);
+				$(".gifs").append("<img src=\"" + image + "\" alt=\"\">");				
+			});
+			
+			
+		}
+	});
+	 
+}
+
 
 getUserDetials().done(function() {
 	if(loggedIn) {
@@ -1139,5 +1158,11 @@ $("document").ready(function() {
 
 	$("body").tooltip({
 		selector: '[data-toggle="tooltip"]'
+	});
+
+	$("#gifSearch").on('change', function () {
+		var searchPhrase = $(this).val();
+		console.log(searchPhrase);
+		GIFSearch(searchPhrase);
 	});
 });
