@@ -36,8 +36,8 @@ function userLogin(){
 				}
 				else 
 				{
-					$("." + errors[element.code].field).addClass("has-error");
-					$("." + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
+					$(".login" + errors[element.code].field).addClass("has-error");
+					$(".login" + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
 				}
 			});
 		},				
@@ -79,8 +79,8 @@ function userRegister(){
 				}
 				else 
 				{
-					$("." + errors[element.code].field).addClass("has-error");
-					$("." + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
+					$(".register" + errors[element.code].field).addClass("has-error");
+					$(".register" + errors[element.code].field +" .help-block").text(errors[element.code].errorMessage);	
 				}
 			});
 		},
@@ -408,12 +408,12 @@ function addMessage(data, userName){
 function getUserDetials() {
 	return $.ajax({
 		dataType: "json",
-		url: "API/user/",
+		url: "API/profile/",
 		success: function(data) {
-			userName = data.userData["userName"];
-			firstName = data.userData["firstName"];
-			lastName = data.userData["lastName"];
-			profileImage = data.userData["profileImage"];
+			userName = data.userProfile["userName"];
+			firstName = data.userProfile["firstName"];
+			lastName = data.userProfile["lastName"];
+			profileImage = data.userProfile["profileImage"];
 			loggedIn = true;
 		},
 		error: function(jqXHR, textStatus, errorThrown) { loggedIn = false; }

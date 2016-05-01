@@ -17,13 +17,12 @@ require_once("content/api/UserAPI.php");
 require_once("content/config/errorHandling.php");
 require_once("content/config/pageRequests.php");
 require_once("content/librarys/SlackBot.php");
-$loginDetails = CheckLogin(); //Check if the use is logged in
 
 $page = "";
 $login = false;
 $error = false;
 
-if(array_key_exists("userData", $loginDetails)) //If the userData is returned then the user is logged in
+if(CheckLogin()) //Check if a user is logged in
 {
 	
 	$userID = $_SESSION['userID'];

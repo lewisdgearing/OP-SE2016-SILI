@@ -11,7 +11,7 @@ $controller = true;
 require_once ("../librarys/MysqliDb.php");
 require_once("../config/dbconnect.inc.php");
 require_once("../config/config.inc.php");
-require_once("../config/errorHandling.php");
+require_once("../config/errorHandlingNew.php");
 require_once("../config/APIrequests.php");
 require_once("../api/UserAPI.php");
 require_once("../api/SayAPI.php");

@@ -1,22 +1,18 @@
 var errors = {};
-//Registration Errors
-errors["R002"] = {"field":"registerEmail", "errorMessage":"Please enter your email address"};
-errors["R003"] = {"field":"registerEmail", "errorMessage":"Please enter a valid email address"};
-errors["R004"] = {"field":"registerConfirmEmail", "errorMessage":"Please enter confirm email address"};
-errors["R005"] = {"field":"registerConfirmEmail", "errorMessage":"Confirm email doesnt match Email Address"};
-errors["R006"] = {"field":"registerEmail", "errorMessage":"This email has already been used to register"};
-errors["R008"] = {"field":"registerFirstName", "errorMessage":"Please enter your First Name"};
-errors["R009"] = {"field":"registerLastName", "errorMessage":"Please Enter your Last Name"};
-errors["R010"] = {"field":"registerPassword", "errorMessage":"Your password does not meet the complexity requirements"};
-errors["R011"] = {"field":"registerConfirmPassword", "errorMessage":"Confirm password does not match password"};
-errors["R012"] = {"field":"registerConfirmPassword", "errorMessage":"Please confirm your password"};
-errors["R013"] = {"field":"registerPassword", "errorMessage":"Please enter your password"};
-errors["R014"] = {"field":"registerUserName", "errorMessage":"Please enter a UserName"};
-errors["R015"] = {"field":"registerUserName", "errorMessage":"Your UserName does not meet the requirements"};
-errors["R016"] = {"field":"registerUserName", "errorMessage":"The UserName has already been used, please choose another"};
-//Login errors
-errors["L002"] = {"field":"loginEmail", "errorMessage":"Please enter your email address"};
-errors["L003"] = {"field":"loginEmail", "errorMessage":"Please enter a valid email address"};
-errors["L004"] = {"field":"loginPassword", "errorMessage":"Please enter your password"};
-errors["L005"] = {"field":"loginPassword", "errorMessage":"Incorrect password entered"};
-errors["L006"] = {"field":"loginEmail", "errorMessage":"Please enter a valid email address"};
+//UserAPI Errors
+errors["U001"] = {"field":"Email", "errorMessage":"Please enter your email address"};
+errors["U002"] = {"field":"Email", "errorMessage":"Please enter a valid email address"};
+errors["U003"] = {"field":"Password", "errorMessage":"Please enter your password"};
+errors["U004"] = {"field":"Password", "errorMessage":"Incorrect password entered"};
+errors["U005"] = {"field":"Email", "errorMessage":"Email has not been used to register"};
+errors["U007"] = {"field":"ConfirmEmail", "errorMessage":"Please enter confirm email address"};
+errors["U008"] = {"field":"ConfirmEmail", "errorMessage":"Confirm email doesnt match Email Address"};
+errors["U009"] = {"field":"Email", "errorMessage":"This email has already been used to register"};
+errors["U010"] = {"field":"FirstName", "errorMessage":"Please enter your First Name"};
+errors["U011"] = {"field":"LastName", "errorMessage":"Please Enter your Last Name"};
+errors["U012"] = {"field":"Password", "errorMessage":"Your password does not meet the complexity requirements"};
+errors["U013"] = {"field":"ConfirmPassword", "errorMessage":"Confirm password does not match password"};
+errors["U014"] = {"field":"ConfirmPassword", "errorMessage":"Please confirm your password"};
+errors["U015"] = {"field":"UserName", "errorMessage":"Please enter a UserName"};
+errors["U016"] = {"field":"UserName", "errorMessage":"Your UserName does not meet the requirements"};
+errors["U017"] = {"field":"UserName", "errorMessage":"The UserName has already been used, please choose another"};
