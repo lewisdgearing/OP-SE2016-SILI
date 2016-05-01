@@ -10,7 +10,7 @@
   *	$internal=true;
   *  
   * @copyright 2016 GLADE
-  *
+  * @filesource
   * @author Probably Lewis
   *
   */
@@ -934,6 +934,8 @@ function GetActivityUsers($profileID, $action)
  *
  * Preform Boo Action
  *
+ * @param    int $profileID of the current logged in user
+ *
  */
 function Boo($profileID)
 {
@@ -943,6 +945,8 @@ function Boo($profileID)
 /**
  *
  * Preform Applaud Action
+ *
+ * @param    int $profileID of the current logged in user
  *
  */
 function Applaud($profileID)
@@ -954,6 +958,8 @@ function Applaud($profileID)
  *
  * Preform Resay Action
  *
+ * @param    int $profileID of the current logged in user
+ *
  */
 function ReSay($profileID)
 {
@@ -963,6 +969,8 @@ function ReSay($profileID)
 /**
  *
  * Return the users who Applaud a Say
+ *
+ * @param    int $profileID of the current logged in user
  *
  */
 function ApplaudUsers($profileID)
@@ -974,6 +982,8 @@ function ApplaudUsers($profileID)
  *
  * Return the users who Boo a Say
  *
+ * @param    int $profileID of the current logged in user
+ *
  */
 function BooUsers($profileID)
 {
@@ -983,6 +993,8 @@ function BooUsers($profileID)
 /**
  *
  * Return the users who ReSay a Say
+ *
+ * @param    int $profileID of the current logged in user
  *
  */
 function ResayUsers($profileID)

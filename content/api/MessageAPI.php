@@ -10,7 +10,7 @@
   *	$internal=true;
   *  
   * @copyright 2016 GLADE
-  *
+  * @filesource
   * @author Probably Dan (w/help from Lewis :) )
   *
   */
@@ -257,6 +257,7 @@ function GetConversation($profileID)
  * 
  *
  * @param    int  $messageID of the requested message
+ * @param    int $profileID of the current logged in user
  * @return   array Containing the message requested
  *
  */

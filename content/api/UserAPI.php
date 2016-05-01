@@ -10,7 +10,7 @@
   *	$internal=true;
   *  
   * @copyright 2016 GLADE
-  *
+  * @filesource
   * @author Probably Lewis
   *
   */
@@ -150,7 +150,7 @@ function ChangePassword($userID, $hashedPassword)
 	$db->update("UserLogin", $data);
 
 	//Delete all the saved sessions
-	deleteAllRememberMeCookies($userID)
+	deleteAllRememberMeCookies($userID);
 }
 
 /**
@@ -304,6 +304,8 @@ function CookieLogin()
  * Generates a new Remember Me cookie for a user
  * storing it in the database to check on the next login
  * 
+ * @param    int $userID of the user logging in
+ * @param    string $currentToken if an existing token was used to login
  *
  */
 function newUserRememberMeCookie($userID, $currentToken = '')
@@ -344,6 +346,7 @@ function newUserRememberMeCookie($userID, $currentToken = '')
  *
  * Removes a users Remember me cookie from the database
  * 
+ * @param    int $userID of the user logging in
  *
  */
 function deleteRememberMeCookie($userID)
@@ -365,7 +368,8 @@ function deleteRememberMeCookie($userID)
  * Deletes all remember me cookies
  *
  * Removes all of a users Remember me cookies from the database
- * 
+ *
+ * @param    int $userID of the user logging in
  *
  */
 function deleteAllRememberMeCookies($userID)

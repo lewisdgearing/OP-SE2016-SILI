@@ -10,7 +10,7 @@
   *	$internal=true;
   *  
   * @copyright 2016 GLADE
-  *
+  * @filesource
   * @author Probably Lewis
   *
   */
@@ -61,6 +61,7 @@ return $profileID;
  * @param    int  $userID of the new user 
  * @param 	 string $firstName The users first name
  * @param 	 string $lastName The users last name
+ * @param 	 string $userName The users chosen userName
  *
  */
 function CreateProfile($userID, $firstName, $lastName, $userName)
