@@ -41,278 +41,244 @@ $errorCodes["G000"] = [
 	"code" => "G000",
 	"field" => "",
 	"message" => "Error",
-	];
-	
+];
 $errorCodes["G001"] = [
 	"code" => "G001",
 	"field" => "userID",
 	"message" => "No UserID provided",
-	];
-	
+];
+
 $errorCodes["G002"] = [
 	"code" => "G002",
 	"field" => "profileID",
-	"message" => "profileID not found",
-	];
+	"message" => "No ProfileID provided",
+];
 	
 //Generic MySQL codes/Messages
 $errorCodes["M001"] = [
-		"code" => "M001",
-		"field" => "mysqli",
-		"message" => "Failed to connect to MySQLi",
-		];
-$errorCodes["M002"] = [
-		"code" => "M002",
-		"field" => "mysqli",
-		"message" => "MySQLi failed to prepare statement",
-		];
-	
-// Login error codes/messages
-$errorCodes["L002"] = [
-		"code" => "L002",
-		"field" => "email",
-		"message" => "Email is empty", 
-		];
-$errorCodes ["L003"] = [
-		"code" => "L003",
-		"field" => "email",
-		"message" => "Not a Valid Email",
-		];
-$errorCodes ["L004"] = [
-		"code" => "L004",
-		"field" => "password",
-		"message" => "Password is empty",
-		];
-$errorCodes ["L005"] = [
-		"code" => "L005",
-		"field" => "password",
-		"message" => "Password incorrect",
-		];
-$errorCodes ["L006"] = [
-		"code" => "L006",
-		"field" => "user",
-		"message" => "User email not found",
-		];
-$errorCodes ["L007"] = [
-		"code" => "L007",
-		"field" => "mysqli",
-		"message" => "Error with mysqli prepare",
-		];
+	"code" => "M001",
+	"field" => "mysqli",
+	"message" => "Failed to connect to MySQLi",
+];
 
-// Check Login error codes/messages
-$errorCodes ["C001"] = [
-		"code" => "C001",
-		"field" => "userID",
-		"message" => "User Profile not found",
-		];
-$errorCodes ["C002"] = [
-		"code" => "C002",
-		"field" => "userID",
-		"message" => "No User Logged in",
-		];
-		
-// Registration error codes/messages
-$errorCodes ["R002"] = [
-		"code" => "R002",
-		"field" => "email",
-		"message" => "Email is empty", 
-		];
-$errorCodes ["R003"] = [
-		"code" => "R003",
-		"field" => "email",
-		"message" => "Not a valid email", 
-		];
-$errorCodes ["R004"] = [
-		"code" => "R004",
-		"field" => "emailConfirm",
-		"message" => "Confirmation email is empty", 
-		];
-$errorCodes ["R005"] = [
-		"code" => "R005",
-		"field" => "email & emailConfirm",
-		"message" => "Emails dont match", 
-		];
-$errorCodes ["R006"] = [
-		"code" => "R006",
-		"field" => "email",
-		"message" => "Email already exists in the database", 
-		];
-$errorCodes ["R008"] = [
-		"code" => "R008",
-		"field" => "firstName",
-		"message" => "First name is empty", 
-		];
-$errorCodes ["R009"] = [
-		"code" => "R009",
-		"field" => "lastName",
-		"message" => "Last name is empty", 
-		];
-$errorCodes ["R010"] = [
-		"code" => "R010",
-		"field" => "password",
-		"message" => "Password does not meet the complexity requirements", 
-		];
-$errorCodes ["R011"] = [
-		"code" => "R011",
-		"field" => "password & confirmPassword",
-		"message" => "Password does not match Confirm password", 
-		];
-$errorCodes ["R012"] = [
-		"code" => "R012",
-		"field" => "confirmPassword",
-		"message" => "Password Confirmation is empty", 
-		];
-$errorCodes ["R013"] = [
-		"code" => "R013",
-		"field" => "password",
-		"message" => "Password is empty", 
-		];
-$errorCodes ["R014"] = [
-		"code" => "R014",
-		"field" => "userName",
-		"message" => "User Name is empty", 
-		];
-$errorCodes ["R015"] = [
-		"code" => "R015",
-		"field" => "userName",
-		"message" => "User Name does not meet the complexity requirements", 
-		];
-$errorCodes ["R016"] = [
-	"code" => "R016",
-	"field" => "",
-	"message" => "User Name already Exists", 
-	];
-		
-// SayIt error codes/messages
-$errorCodes ["S002"] = [
-		"code" => "S002",
-		"field" => "userID",
-		"message" => "UserID is not set", 
-		];
-$errorCodes ["S003"] = [
-		"code" => "S003",
-		"field" => "sayBox",
-		"message" => "Say is empty", 
-		];
-		
-// Profile error codes/messages
-$errorCodes ["P001"] = [
-	"code" => "P001",
-	"field" => "firstName",
-	"message" => "First Name is empty", 
-	];
-	
-$errorCodes ["P002"] = [
-	"code" => "P002",
-	"field" => "lastName",
-	"message" => "Last Name is empty", 
-	];
-	
-$errorCodes ["P003"] = [
-	"code" => "P003",
-	"field" => "userName",
-	"message" => "User Name is empty", 
-	];
-	
-$errorCodes ["P004"] = [
-	"code" => "P004",
-	"field" => "userName",
-	"message" => "User Name does not meet requirements", 
-	];
-	
-$errorCodes ["P005"] = [
-	"code" => "P005",
-	"field" => "dob",
-	"message" => "Date of Birth is empty", 
-	];
-	
-$errorCodes ["P006"] = [
-	"code" => "P006",
-	"field" => "gender",
-	"message" => "Gender is empty", 
-	];
-			
-$errorCodes ["P007"] = [
-	"code" => "P007",
-	"field" => "",
-	"message" => "User Name already Exists", 
-	];
-				
-$errorCodes ["P008"] = [
-	"code" => "P008",
-	"field" => "currentPassword",
-	"message" => "Current Password is empty", 
-	];
-				
-$errorCodes ["P009"] = [
-	"code" => "P009",
-	"field" => "newPassword",
-	"message" => "New password does not meet complexity requirements", 
-	];
-				
-$errorCodes ["P010"] = [
-	"code" => "P010",
-	"field" => "",
-	"message" => "New Password does not Match Confirm New Password", 
-	];
-				
-$errorCodes ["P011"] = [
-	"code" => "P011",
-	"field" => "confirmNewPassword",
-	"message" => "Confirm New Password is empty", 
-	];	
-	
-$errorCodes ["P012"] = [
-	"code" => "P012",
+//UserAPI Errors
+$errorCodes["U001"] = [
+	"code" => "U001",
+	"field" => "email",
+	"message" => "Email is empty",
+];
+$errorCodes["U002"] = [
+	"code" => "U002",
+	"field" => "email",
+	"message" => "Invalid Email format",
+];
+$errorCodes["U003"] = [
+	"code" => "U003",
 	"field" => "password",
-	"message" => "Incorrect Current Password", 
-	];
-		
-$errorCodes ["P013"] = [
-	"code" => "P013",
-	"field" => "userBio",
-	"message" => "User Bio is empty", 
-	];
-		
-$errorCodes ["P014"] = [
-	"code" => "P014",
-	"field" => "newEmail",
-	"message" => "Email is invaid format", 
-	];	
-	
-			
-$errorCodes ["P015"] = [
-	"code" => "P015",
-	"field" => "confirmNewEmail",
-	"message" => "Confirm New Email is empty", 
-	];	
-	
-$errorCodes ["P016"] = [
-	"code" => "P016",
-	"field" => "",
-	"message" => "New Email does not match Confirm New Email", 
-	];	
-	
-$errorCodes ["P017"] = [
-	"code" => "P017",
-	"field" => "",
-	"message" => "Email is already Registered", 
-	];
+	"message" => "Password is empty",
+];
+$errorCodes["U004"] = [
+	"code" => "U004",
+	"field" => "password",
+	"message" => "Password is incorrect",
+];
+$errorCodes["U005"] = [
+	"code" => "U005",
+	"field" => "email",
+	"message" => "Email address not found",
+];
+$errorCodes["U007"] = [
+	"code" => "U007",
+	"field" => "emailConfirm",
+	"message" => "Confirm Email is empty",
+];
+$errorCodes["U008"] = [
+	"code" => "U008",
+	"field" => "email/emailConfirm",
+	"message" => "Email does not match Confirm Email",
+];
+$errorCodes["U009"] = [
+	"code" => "U009",
+	"field" => "email",
+	"message" => "Email has already been used to register",
+];
+$errorCodes["U010"] = [
+	"code" => "U010",
+	"field" => "firstName",
+	"message" => "First Name is empty",
+];
+$errorCodes["U011"] = [
+	"code" => "U011",
+	"field" => "lastName",
+	"message" => "Last Name is empty",
+];
+$errorCodes["U012"] = [
+	"code" => "U012",
+	"field" => "password",
+	"message" => "Password does not meet complexity requirments",
+];
+$errorCodes["U013"] = [
+	"code" => "U013",
+	"field" => "password/confirmPassword",
+	"message" => "Password does not match Confirm Password",
+];
+$errorCodes["U014"] = [
+	"code" => "U014",
+	"field" => "confirmPassword",
+	"message" => "Confirm Password is empty",
+];
+$errorCodes["U015"] = [
+	"code" => "U015",
+	"field" => "userName",
+	"message" => "UserName is empty",
+];
+$errorCodes["U016"] = [
+	"code" => "U016",
+	"field" => "userName",
+	"message" => "UserName does not meet the complexity requirments",
+];
+$errorCodes["U017"] = [
+	"code" => "U017",
+	"field" => "userName",
+	"message" => "UserName already exists",
+];
 
-// Comment error codes/messages
-$errorCodes ["Co02"] = [
-		"code" => "C002",
-		"field" => "userID",
-		"message" => "UserID is not set",
-		];
-$errorCodes ["Co03"] = [
-		"code" => "C003",
-		"field" => "commentBox",
-		"message" => "Comment is empty",
-		];
-$errorCodes ["Co04"] = [
-		"code" => "C004",
-		"field" => "sayID",
-		"message" => "SayID is not set",
-		];
+//SayAPI
+$errorCodes["S000"] = [
+	"code" => "S000",
+	"field" => "sayID",
+	"message" => "SayID was not given",
+];
+$errorCodes["S001"] = [
+	"code" => "S001",
+	"field" => "sayBox",
+	"message" => "SayBox is empty",
+];
+$errorCodes["S002"] = [
+	"code" => "S002",
+	"field" => "commentBox",
+	"message" => "CommentBox is empty",
+];
+$errorCodes["S003"] = [
+	"code" => "S003",
+	"field" => "",
+	"message" => "Cannot Resay your own Say",
+];
+
+//ProfileAPI
+$errorCodes["P001"] = [
+	"code" => "P001",
+	"field" => "",
+	"message" => "Search is empty",
+];
+$errorCodes["P002"] = [
+	"code" => "P002",
+	"field" => "",
+	"message" => "Other User cannot be yourself",
+];
+$errorCodes["P003"] = [
+	"code" => "P003",
+	"field" => "",
+	"message" => "ProfileID of other user not provided",
+];
+$errorCodes["P004"] = [
+	"code" => "P004",
+	"field" => "",
+	"message" => "Already listening to the given user",
+];
+$errorCodes["P005"] = [
+	"code" => "P005",
+	"field" => "",
+	"message" => "Already not listening to the given user",
+];
+$errorCodes["P006"] = [
+	"code" => "P006",
+	"field" => "firstName",
+	"message" => "First Name is empty",
+];
+$errorCodes["P007"] = [
+	"code" => "P007",
+	"field" => "lastName",
+	"message" => "Last Name is empty",
+];
+$errorCodes["P008"] = [
+	"code" => "P008",
+	"field" => "userName",
+	"message" => "UserName is empty",
+];
+$errorCodes["P009"] = [
+	"code" => "P009",
+	"field" => "userName",
+	"message" => "UserName does not meet the complexity requirments",
+];
+$errorCodes["P010"] = [
+	"code" => "P010",
+	"field" => "dob",
+	"message" => "DOB is empty",
+];
+$errorCodes["P011"] = [
+	"code" => "P011",
+	"field" => "gender",
+	"message" => "Gender is empty",
+];
+$errorCodes["P012"] = [
+	"code" => "P012",
+	"field" => "userName",
+	"message" => "UserName already exists",
+];
+$errorCodes["P013"] = [
+	"code" => "P013",
+	"field" => "currentPassword",
+	"message" => "Current Password is empty",
+];
+$errorCodes["P014"] = [
+	"code" => "P014",
+	"field" => "newPassword",
+	"message" => "New Password is empty",
+];
+$errorCodes["P015"] = [
+	"code" => "P015",
+	"field" => "currentPassword",
+	"message" => "Current Password is incorrect",
+];
+$errorCodes["P016"] = [
+	"code" => "P016",
+	"field" => "userBio",
+	"message" => "userBio is over 500 characters",
+];
+$errorCodes["P017"] = [
+	"code" => "P017",
+	"field" => "newEmail",
+	"message" => "New Email field is empty",
+];
+$errorCodes["P018"] = [
+	"code" => "P018",
+	"field" => "newEmail",
+	"message" => "Invalid Email format",
+];
+$errorCodes["P019"] = [
+	"code" => "P019",
+	"field" => "confirmNewEmail",
+	"message" => "Confirm New Email is empty",
+];
+$errorCodes["P020"] = [
+	"code" => "P020",
+	"field" => "newEmail",
+	"message" => "New Email already exists",
+];
+$errorCodes["P021"] = [
+	"code" => "P021",
+	"field" => "newPassword/confirmNewPassword",
+	"message" => "New Password does not match Confirm New Password",
+];
+$errorCodes["P022"] = [
+	"code" => "P023",
+	"field" => "newPassword",
+	"message" => "New Password is empty",
+];
+$errorCodes["P023"] = [
+	"code" => "P023",
+	"field" => "confirmNewPassword",
+	"message" => "Confirm New Password is empty",
+];
 ?>

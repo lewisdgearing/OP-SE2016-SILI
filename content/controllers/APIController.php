@@ -49,7 +49,7 @@ if (is_ajax())
 			{
 				if (array_key_exists($_SERVER['REQUEST_METHOD'], $reqArray[$requestedAPI][$requestedFunction])) 
 				{
-					$result = $reqArray[$requestedAPI][$requestedFunction][$_SERVER['REQUEST_METHOD']]($profileID, $userID);
+					$result = $reqArray[$requestedAPI][$requestedFunction][$_SERVER['REQUEST_METHOD']]($profileID);
 					
 					//Output Request json result
 					header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
