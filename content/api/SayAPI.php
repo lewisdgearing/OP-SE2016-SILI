@@ -262,39 +262,29 @@ function FetchSay($sayID, $justMe = false, $requestedProfileID = 0) //Fetches th
 	global $db, $profileImagePath, $defaultProfileImg, $profileID, $Emojione;
 	$say = array();
 
-	$queryResult = $db->rawQuery("SELECT sayID, timePosted, message, profileImage, firstName, lastName, userName FROM Says INNER JOIN Profile ON Says.profileID=Profile.profileID WHERE sayID = ?", Array($sayID));
+	$queryResult = $db->rawQuery("SELECT sayID, timePosted, message, profileID FROM Says WHERE sayID = ?", Array($sayID));
 		
 	if (count($queryResult) == 1)
 	{
-		$profileImage = $queryResult[0]["profileImage"];
-		$firstName = $queryResult[0]["firstName"];
-		$lastName = $queryResult[0]["lastName"];
-		$userName = $queryResult[0]["userName"];
-						
-		if ($profileImage == "")
-		{
-			$profileImage = $defaultProfileImg;
-		}
+		$userProfile = GetUserProfile($profileID, $queryResult[0]["profileID"], "firstName, lastName, userName, profileImage, profileLink");
 		
-		$ownSay = GetOwnSayStatus($queryResult[0]["sayID"], $profileID);
-
 		$say = [
 		"sayID" => $queryResult[0]["sayID"],
 		"timePosted" => strtotime($queryResult[0]["timePosted"]) * 1000,
 		"message" => $Emojione->toImage($queryResult[0]["message"]),
 		"messageClean" => $queryResult[0]["message"],
-		"profileImage" => $profileImagePath . $profileImage,
-		"profileLink" => "profile/" . $userName,
-		"firstName" => $firstName,
-		"lastName" => $lastName,
-		"userName" => $userName,
+		"firstName" => $userProfile["firstName"],
+		"lastName" => $userProfile["lastName"],
+		"userName" => $userProfile["userName"],
+		"profileImage" => $userProfile["profileImage"],
+		"profileLink" => $userProfile["profileLink"],
 		"boos" => GetActivityCount($queryResult[0]["sayID"], "Boo"),
 		"applauds" => GetActivityCount($queryResult[0]["sayID"], "Applaud"),
 		"resays" => GetActivityCount($queryResult[0]["sayID"], "Re-Say"),
 		"booStatus" => GetActivityStatus($profileID, $queryResult[0]["sayID"], "Boo"),
 		"applaudStatus" => GetActivityStatus($profileID, $queryResult[0]["sayID"], "Applaud"),
 		"resayStatus" => GetActivityStatus($profileID, $queryResult[0]["sayID"], "Re-Say"),
-		"ownSay" => $ownSay,
+		"ownSay" => GetOwnSayStatus($queryResult[0]["sayID"], $profileID),
 		"activityStatus" => GetActivity($profileID, $queryResult[0]["sayID"], "Re-Say", $justMe, $requestedProfileID),
 		];
 	}	
@@ -367,12 +357,7 @@ function GetUserSays($profileID) //Get the says of a user
 
 	if (isset($requestedUserName) && strlen($requestedUserName) > 0)
 	{
-		$queryResult = $db->rawQuery("SELECT profileID FROM Profile WHERE userName = ?", Array($requestedUserName));
-
-		if (count($queryResult) == 1)
-		{
-			$requestedProfileID = $queryResult[0]["profileID"];
-		}
+		$requestedProfileID = GetProfileID($requestedUserName);
 	}
 	
 	if (!isset($requestedProfileID))
@@ -521,32 +506,8 @@ function GetActivity($profileID, $sayID, $action, $justMe = false, $requestedPro
 
 	$queryResult = $db->rawQuery($activityQuery , Array($requestedProfileID, $action, $sayID));
 	if (count($queryResult) >= 1)
-	{
-	
-		$activityProfileID = $queryResult[0]["profileID"];
-	
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID = ?" , Array($activityProfileID));
-	
-		if (count($queryResult) == 1)
-		{
-			$firstName = $queryResult[0]["firstName"];
-			$lastName = $queryResult[0]["lastName"];
-			$userName = $queryResult[0]["userName"];
-			$profileImage = $queryResult[0]["profileImage"];
-					
-			if ($profileImage == "")
-			{
-				$profileImage = $defaultProfileImg;
-			}
-			
-			$activity = [
-				"profileImage" => $profileImagePath . $profileImage,
-				"firstName" => $firstName,
-				"lastName" => $lastName,
-				"userName" => $userName,
-				"profileLink" => "profile/" . $userName,
-			];
-		}
+	{	
+		$activity = GetUserProfile($profileID, $queryResult[0]["profileID"], "firstName, lastName, userName, profileImage, profileLink");
 	}
 	
 	
@@ -893,28 +854,12 @@ function GetActivityUsers($profileID, $action)
 	//Process
 	if (count($errors) == 0) //If theres no errors so far
 	{			
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT profileID FROM Activity WHERE sayID = ? AND activity = ?) LIMIT 10", Array($sayID, $action));
+		$queryResult = $db->rawQuery("SELECT profileID FROM Activity WHERE sayID = ? AND activity = ? LIMIT 10", Array($sayID, $action));
 		if (count($queryResult) > 0)
 		{
 			foreach ($queryResult as $user) 
 			{
-				$firstName = $user["firstName"];
-				$lastName = $user["lastName"];
-				$userName = $user["userName"];
-				$profileImage = $user["profileImage"];
-					 
-				if ($profileImage == "")
-				{
-					$profileImage = $defaultProfileImg;
-				}
-				
-				$user = [
-					"firstName" => $firstName,
-					"lastName" => $lastName,
-					"userName" => $userName,
-					"profileImage" => $profileImagePath . $profileImage,
-					"profileLink" => "profile/" . $userName,
-				];	
+				$user = GetUserProfile($profileID, $queryResult[0]["profileID"], "firstName, lastName, userName, profileImage, profileLink");
 				array_push($users, $user);
 			}				
  

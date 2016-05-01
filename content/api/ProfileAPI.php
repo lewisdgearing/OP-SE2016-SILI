@@ -118,7 +118,7 @@ function GetProfileID($userName)
 {
 	global $db;
 	$profileID = 0;
-	if(strlen($userName != 0))
+	if(strlen($userName) != 0)
 	{
 		$queryResult = $db->rawQuery("SELECT profileID FROM Profile WHERE userName = ?", Array($userName));
 		if(count($queryResult) == 1)
@@ -174,6 +174,89 @@ function GetProfileUserID($profileID)
 
 /**
  *
+ * Returns the given users profile
+ *
+ * Returns a users profile based on either the profileID given
+ *
+ * @param    string $profileID of the current logged in user 
+ * @param    string $requestedProfileID of the current logged in user 
+ * @param 	 string $filter comma seperated list of what fields are required
+ * @return   array of the users profile or any errors that occur
+ *
+ */
+function GetUserProfile($profileID, $requestedProfileID, $filter= "")
+{
+	global $db, $profileImagePath;
+	
+	if($requestedProfileID === 0)
+	{
+		return null;
+	}
+
+	if($filter == "")
+	{
+		$filter = array("profieID", "firstName", "lastName", "fullName", "fullNameUserName", "userName", "profileImage", "profileLink", "userBio", "email", "dob"," gender", "location", "joinDate", "listensTo", "audience", "listening");
+	}
+	else
+	{
+		$filter = explode(",", str_replace(" ", "", $filter));
+	}
+
+	if(count($filter) == 0)
+	{
+		return null;
+	}
+
+	$profile = array();
+
+	$queryResult = $db->rawQuery("SELECT profileID, firstName, lastName, userName, profileImage, userBio, dob, gender, location, joinDate FROM Profile WHERE profileID = ?", Array($requestedProfileID));
+
+	if (count($queryResult) == 1)
+	{	
+		if (true)//$queryResult[0]["profileImage"] == "")
+		{
+			$profileImage = "identicon/" . $queryResult[0]["userName"] . ".png";
+		}
+		else
+		{
+			$profileImage = $profileImagePath . $queryResult[0]["profileImage"];
+		}
+		
+		//Additional Fields not returned in the query or need additonal formating
+		$fields = array();
+		$fields["profileLink"] = "profile/" . $queryResult[0]["userName"];
+		$fields["fullName"] = $queryResult[0]["firstName"] . " " . $queryResult[0]["lastName"];
+		$fields["listensTo"] = getCount($requestedProfileID, "listening");
+		$fields["audience"] = getCount($requestedProfileID, "audience");
+		$fields["listening"] = getListeningStatus($profileID, $requestedProfileID);
+		$fields["profileImage"] = $profileImage;
+		$fields["email"] = GetUserEmail(GetUserProfileID($requestedProfileID));
+		$fields["dob"] =  date("d/m/Y", strtotime($queryResult[0]["dob"]));
+		$fields["fullNameUserName"] = $queryResult[0]["firstName"] . " " . $queryResult[0]["lastName"] . " (" . $queryResult[0]["userName"] . ")";
+
+		foreach ($filter as $value) 
+		{
+			if(array_key_exists($value, $fields))
+			{
+				$profile["$value"] = $fields["$value"];
+			}
+			elseif (array_key_exists($value, $queryResult[0])) 
+			{
+				$profile["$value"] = $queryResult[0]["$value"];
+			}
+			else
+			{
+				$profile["$value"] = null;
+			}
+		}
+		
+	}
+	
+	return $profile;
+}
+
+/**
+ *
  * Checks if the given username exists
  *
  * If profileID is given it wont check that profileID's userName,
@@ -221,9 +304,9 @@ function UserNameCheck($userName, $profileID = 0)
  * @return   array of the users account settings or any errors that occur
  *
  */
-function GetUserAccountSettings($profileID)
+function UserAccountSettings($profileID)
 {
-	global $db, $errorCodes, $profileImagePath, $defaultProfileImg;
+	global $db, $errorCodes;
 	
 	$result = array();
 	$errors = array();
@@ -237,42 +320,8 @@ function GetUserAccountSettings($profileID)
 	{
 		array_push($errors, $errorCodes["G002"]);
 	}
-	else {
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userEmail, userName, userBio, dob, gender, location, joinDate, profileImage FROM Profile INNER JOIN UserLogin ON UserLogin.userID=Profile.userID WHERE Profile.profileID = ?", Array($profileID));
-		if (count($queryResult) == 1)
-		{
-			$firstName = $queryResult[0]["firstName"];
-			$lastName = $queryResult[0]["lastName"];
-			$email = $queryResult[0]["userEmail"];
-			$userName = $queryResult[0]["userName"]; 
-			$userBio = $queryResult[0]["userBio"];
-			$dob = $queryResult[0]["dob"];
-			$gender = $queryResult[0]["gender"];
-			$location = $queryResult[0]["location"];
-			$joinDate = $queryResult[0]["joinDate"];
-			$profileImage = $queryResult[0]["profileImage"];
-					
-			if ($profileImage == "")
-			{
-				$profileImage = $defaultProfileImg;
-			}
-			
-			$profile = [
-			"firstName" => $firstName,
-			"lastName" => $lastName,
-			"userName" => $userName,
-			"email" => $email,
-			"userBio" =>  $userBio,
-			"dob" =>  date("d/m/Y", strtotime($dob)),
-			"gender" =>  $gender,
-			"location" =>  $location,
-			"joinDate" => strtotime($joinDate) * 1000,
-			"profileImage" => $profileImagePath . $profileImage,
-			];
-			
-			
-		}	
-		$result["userProfile"] = $profile;	
+	else {		
+		$result["userProfile"] = GetUserProfile($profileID, $profileID, "firstName, lastName, userName, email, userBio, dob, gender, location, joinDate, profileImage");
 	}
 	
 	if (count($errors) != 0) //If no errors user is logged in
@@ -295,9 +344,9 @@ function GetUserAccountSettings($profileID)
  * @return   array of the users profile or any errors that occur
  *
  */
-function GetUserProfile($profileID)
+function UserProfile($profileID)
 {
-	global $db, $errorCodes, $profileImagePath, $defaultProfileImg, $request;
+	global $db, $errorCodes, $request;
 	
 	$result = array();
 	$errors = array();
@@ -312,56 +361,25 @@ function GetUserProfile($profileID)
 		array_push($errors, $errorCodes["G002"]);
 	}
 
-	$requestedUserName = GetUserName($profileID);
-
 	if (count($request) >= 3)
 	{
 		if (strlen($request[2]) > 0)
 		{
-			$requestedUserName = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));	
+			$requestedUserName = base64_decode(filter_var($request[2], FILTER_SANITIZE_STRING));
+			$requestedProfileID = GetProfileID($requestedUserName);	
 		}
 	}
 
-	if (!isset($requestedUserName))
+	if (!isset($requestedProfileID))
 	{
-		return null;
-	}
-
-	$queryResult = $db->rawQuery("SELECT profileID, firstName, lastName, userName, userBio, location, profileImage FROM Profile WHERE userName = ?", Array($requestedUserName));
-
-	if (count($queryResult) == 1)
-	{
-		$requestedProfileID = $queryResult[0]["profileID"];
-		$firstName = $queryResult[0]["firstName"];
-		$lastName = $queryResult[0]["lastName"];
-		$userName = $queryResult[0]["userName"];
-		$userBio = $queryResult[0]["userBio"];
-		$location = $queryResult[0]["location"];
-		$profileImage = $queryResult[0]["profileImage"];
-			
-						
-		if ($profileImage == "")
-		{
-			$profileImage = $defaultProfileImg;
-		}
-		
-		$profile = [
-		"profileID" => $requestedProfileID,
-		"firstName" => $firstName,
-		"lastName" => $lastName,
-		"userName" => $userName,
-		"userBio" =>  $userBio,
-		"location" =>  $location,
-		"profileImage" => $profileImagePath . $profileImage,
-		"listensTo" => getCount($requestedProfileID, "listening"),
-		"audience" => getCount($requestedProfileID, "audience"),
-		"listening" => getListeningStatus($profileID, $requestedProfileID),
-		];
-		
-		$result["userProfile"] = $profile;
+		$requestedProfileID = $profileID;
 	}
 	
-	if (count($errors) != 0) //If no errors user is logged in
+	if (count($errors) == 0)
+	{
+		$result["userProfile"] = GetUserProfile($profileID, $requestedProfileID, "profileID, firstName, lastName, userName, userBio, location, profileImage, listensTo, audience, listening");
+	}
+	else
 	{
 		$result["errors"] = $errors;
 	}
@@ -444,9 +462,9 @@ function getCount($profileID, $type)
  * @return   array of users found
  *
  */
-function UserSearch()
+function UserSearch($profileID)
 {
-	global $db, $errorCodes, $profileImagePath, $defaultProfileImg, $request;
+	global $db, $errorCodes, $request;
 	
 	$result = array();
 	$errors = array();
@@ -455,26 +473,14 @@ function UserSearch()
 		$searchResults = array();
 		$searchParam = filter_var($request[2], FILTER_SANITIZE_STRING) . "%";
 		
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE userName LIKE ? OR firstName LIKE ? OR lastName  LIKE ?", Array($searchParam, $searchParam, $searchParam));
+		$queryResult = $db->rawQuery("SELECT profileID FROM Profile WHERE userName LIKE ? OR firstName LIKE ? OR lastName  LIKE ?", Array($searchParam, $searchParam, $searchParam));
 			
 			foreach ($queryResult as $user) 
 			{
-				$firstName = $user["firstName"];
-				$lastName = $user["lastName"];
-				$userName = $user["userName"];
-				$profileImage = $user["profileImage"];
-
-				if ($profileImage == "")
-				{
-					$profileImage = $defaultProfileImg;
-				}
-				
-				$userResults = [
-					"name" => $firstName . " " . $lastName . " (" . $userName . ")",
-					"profileImage" => $profileImagePath . $profileImage,
-					"profileLink" => "profile/" . $userName,
-				];	
-				array_push($searchResults, $userResults);
+				$userResult = GetUserProfile($profileID, $user["profileID"], "fullNameUserName, profileImage, profileLink");
+				$userResult["name"] = $userResult["fullNameUserName"];
+				unset($userResult["fullNameUserName"]);
+				array_push($searchResults, $userResult);
 			 } 	
 
 			 $result = $searchResults;	
@@ -648,7 +654,7 @@ function StopListenToUser($profileID)
  */
 function GetListeners($profileID)
 {
-	global $db, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
+	global $db, $errorCodes, $request;
 	
 	$result = array();
 	$errors = array();
@@ -704,28 +710,12 @@ function GetListeners($profileID)
 	if (count($errors) == 0) //If theres no errors so far
 	{		
 		$offset *= 10;
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT listenerprofileID FROM Listeners WHERE profileID = ? AND dateFollowed >= ? ORDER BY dateFollowed) LIMIT ?,10", Array($requestedProfileID, $timestamp, $offset));
+		$queryResult = $db->rawQuery("SELECT listenerprofileID FROM Listeners WHERE profileID = ? AND dateFollowed >= ? ORDER BY dateFollowed LIMIT ?,10", Array($requestedProfileID, $timestamp, $offset));
 		if (count($queryResult) > 0)
 		{
 			foreach ($queryResult as $user) 
 			{
-				$firstName = $user["firstName"];
-				$lastName = $user["lastName"];
-				$userName = $user["userName"];
-				$profileImage = $user["profileImage"];
-					 
-				if ($profileImage == "")
-				{
-					$profileImage = $defaultProfileImg;
-				}
-				
-				$listener = [
-					"firstName" => $firstName,
-					"lastName" => $lastName,
-					"userName" => $userName,
-					"profileImage" => $profileImagePath . $profileImage,
-					"profileLink" => "profile/" . $userName,
-				];	
+				$listener = GetUserProfile($profileID, $user["profileID"], "firstName, lastName, userName, profileImage");
 				array_push($users, $listener);
 			}				
  
@@ -755,7 +745,7 @@ function GetListeners($profileID)
  */
 function GetAudience($profileID)
 {
-	global $db, $errorCodes, $request, $profileImagePath, $defaultProfileImg;
+	global $db, $errorCodes, $request;
 	
 	$result = array();
 	$errors = array();
@@ -811,29 +801,13 @@ function GetAudience($profileID)
 	if (count($errors) == 0) //If theres no errors so far
 	{	
 		$offset *= 10;
-		$queryResult = $db->rawQuery("SELECT firstName, lastName, userName, profileImage FROM Profile WHERE profileID IN (SELECT profileID FROM Listeners WHERE listenerprofileID = ? AND dateFollowed >= ? ORDER BY dateFollowed) LIMIT ?,10", Array($requestedProfileID, $timestamp, $offset));
+		$queryResult = $db->rawQuery("SELECT profileID FROM Listeners WHERE listenerprofileID = ? AND dateFollowed >= ? ORDER BY dateFollowed LIMIT ?,10", Array($requestedProfileID, $timestamp, $offset));
 		if (count($queryResult) > 0)
 		{
 			foreach ($queryResult as $user) 
 			{
-				$firstName = $user["firstName"];
-				$lastName = $user["lastName"];
-				$userName = $user["userName"];
-				$profileImage = $user["profileImage"];
-					 
-				if ($profileImage == "")
-				{
-					$profileImage = $defaultProfileImg;
-				}
-					
-				$audienceMember = [
-					"firstName" => $firstName,
-					"lastName" => $lastName,
-					"userName" => $userName,
-					"profileImage" => $profileImagePath . $profileImage,
-					"profileLink" => "profile/" . $userName,
-				];	
-				array_push($users, $audienceMember);
+				$audience = GetUserProfile($profileID, $user["profileID"], "firstName, lastName, userName, profileImage");
+				array_push($users, $audience);
 			 }
 		}	
 
@@ -1251,7 +1225,7 @@ function UpdateProfileImage($profileID)
 	
 	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 	
 	if (isset($_POST['profileImage']))
@@ -1281,11 +1255,7 @@ function UpdateProfileImage($profileID)
 		imagejpeg($img, "../profilePics/" . $profileImageFileName);
 	}
 	
-	if (count($errors) == 0) //If no errors user is logged in
-	{
-		$result["message"] = "Profile Image Updated";
-	}
-	else
+	if (count($errors) != 0) //If no errors user is logged in
 	{
 		$result["errors"] = $errors;
 	}

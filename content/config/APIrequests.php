@@ -22,7 +22,7 @@
 		];
 		
 	$reqArray["profile"] = [
-		0 => ["GET" => "GetUserAccountSettings", "POST" => "UpdateProfile"],
+		0 => ["GET" => "UserAccountSettings", "POST" => "UpdateProfile"],
 		"image" => ["GET"=> "", "POST" => "UpdateProfileImage"],
 		"bio" => ["POST" => "UpdateBio"],
 		"password" => ["POST" => "UpdatePassword"],
@@ -32,7 +32,7 @@
 		"audience" => ["GET" => "GetAudience"],
 		"stoplisten" => ["GET" => "StopListenToUser"],
 		"search" => ["GET" => "UserSearch"],
-		"user" => ["GET" => "GetUserProfile"],
+		"user" => ["GET" => "UserProfile"],
 	];
 
 	$reqArray["message"] = [
