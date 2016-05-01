@@ -185,6 +185,77 @@ function ChangeEmail($userID, $emailAddress)
 
 /**
  *
+ * Valadates a users Password
+ * 
+ * Validates the given password against the one stored in the database
+ * to check if it matches
+ *
+ * @param    int $userID of the user whos password needs validated
+ * @param    string $password the password to be validated
+ * @return   bool if the password matches
+ *
+ */
+function PasswordValidate($userID, $password)
+{
+	global $db;
+	
+	$result = false;
+
+	if($userID === 0)
+	{
+		return null;
+	}
+
+	if(strlen($password) == 0)
+	{
+		return null;
+	}
+
+	$queryResult = $db->rawQuery("SELECT userPassword FROM UserLogin WHERE userID = ?", Array($userID));
+	if (count($queryResult) == 1)
+	{
+		$hashPass = $queryResult[0]["userPassword"];
+			
+		if (hash_equals(crypt($password, $hashPass),$hashPass))
+		{
+			$result = true;
+		}
+	}
+
+	return $result;
+}
+
+/**
+ *
+ * Returns the Email address of the given user
+ * 
+ *
+ * @param    int $userID of the user whos password needs validated
+ * @return   string email address of the user
+ *
+ */
+function GetUserEmail($userID)
+{
+	global $db;
+	
+	$userEmail = false;
+
+	if($userID === 0)
+	{
+		return null;
+	}
+
+	$queryResult = $db->rawQuery("SELECT userEmail FROM UserLogin WHERE userID = ?", Array($userID));
+	if (count($queryResult) == 1)
+	{
+		$userEmail = $queryResult[0]["userEmail"];
+	}
+
+	return $userEmail;
+}
+
+/**
+ *
  * User Login
  *
  * Log a User in setting there userID in the session
@@ -528,47 +599,4 @@ function UserRegister()
 	
 	return $result;
 }
-
-/**
- *
- * Valadates a users Password
- * 
- * Validates the given password against the one stored in the database
- * to check if it matches
- *
- * @param    int $userID of the user whos password needs validated
- * @param    string $password the password to be validated
- * @return   bool if the password matches
- *
- */
-function PasswordValidate($userID, $password)
-{
-	global $db;
-	
-	$result = false;
-
-	if($userID === 0)
-	{
-		return null;
-	}
-
-	if(strlen($password) == 0)
-	{
-		return null;
-	}
-
-	$queryResult = $db->rawQuery("SELECT userPassword FROM UserLogin WHERE userID = ?", Array($userID));
-	if (count($queryResult) == 1)
-	{
-		$hashPass = $queryResult[0]["userPassword"];
-			
-		if (hash_equals(crypt($password, $hashPass),$hashPass))
-		{
-			$result = true;
-		}
-	}
-
-	return $result;
-}
-
 ?>
