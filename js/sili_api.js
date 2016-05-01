@@ -829,13 +829,14 @@ function GIFSearch(searchPhrase)
 		url: "http://api.giphy.com/v1/gifs/search?q=" + encodeURIComponent(searchPhrase) + "&api_key=dc6zaTOxFJmzC ",
 		success: function(data) {	
 			$(".gifs").empty();
+			$(".gifs").append("<option value=\"\"></option>");
 			$.each(data.data, function(index, element) {	
 				var image = element.images.fixed_height_small["url"];
+				var id = element["id"];
 				console.log(image);
-				$(".gifs").append("<img src=\"" + image + "\" alt=\"\">");				
+				$(".gifs").append("<option data-img-src=\"" + image + "\" value=\"" + id +"\">" + id +"</option>");				
 			});
-			
-			
+			$(".gifs").imagepicker();
 		}
 	});
 	 
