@@ -66,6 +66,125 @@ function CheckLogin()
 
 /**
  *
+ * Hashes the given password
+ * 
+ *
+ * @param    string $password the password to be hashed
+ * @return   string the hashed password
+ *
+ */
+function PasswordHash($password)
+{
+	if(strlen($password) == 0)
+	{
+		return null;
+	}
+
+	$saltLength = 12;
+	//Generate Salt
+	$bytes = openssl_random_pseudo_bytes($saltLength);
+	$salt   = bin2hex($bytes);
+	
+	//hash password
+	$hashedPassword = crypt($password, '$5$rounds=5000$'. $salt .'$');
+
+	return $hashedPassword;
+}
+
+/**
+ *
+ * Returns the userID of the users whos email matches the one given
+ * 
+ *
+ * @param    string $emailAddress of the user whos ID is neede
+ * @return   int the userID of the user whos email matches
+ *
+ */
+function GetUserID($emailAddress)
+{
+	global $db;
+
+	$userID = 0;
+
+	if(strlen($emailAddress) == 0)
+	{
+		return null;
+	}
+
+	$queryResult = $db->rawQuery("SELECT userID FROM UserLogin WHERE userEmail = ?", Array($emailAddress));
+	if (count($queryResult) == 1)
+	{
+		$userID = $queryResult[0]["userID"];
+	}
+
+	return $userID;	
+}
+
+/**
+ *
+ * Updates the given userID's password
+ * 
+ *
+ * @param    int $userID of the user whos password is being changed
+ * @param    string $hashedPassword the password to be set
+ *
+ */
+function ChangePassword($userID, $hashedPassword)
+{
+	global $db;
+
+	if($userID == 0)
+	{
+		return null;
+	}
+
+	if(strlen($hashedPassword) == 0)
+	{
+		return null;
+	}
+
+	$data = Array(
+	    "userPassword" => $hashedPassword,
+	);
+	$db->where("userID", $userID);
+	$db->update("UserLogin", $data);
+
+	//Delete all the saved sessions
+	deleteAllRememberMeCookies($userID)
+}
+
+/**
+ *
+ * Updates the given userID's email
+ * 
+ *
+ * @param    int $userID of the user whos email is being changed
+ * @param    string $emailAddress the email address to be set
+ *
+ */
+function ChangeEmail($userID, $emailAddress)
+{
+	global $db;
+
+	if($userID == 0)
+	{
+		return null;
+	}
+
+	if(strlen($emailAddress) == 0)
+	{
+		return null;
+	}
+
+	$data = Array(
+	    "userEmail" => $emailAddress,
+	);
+	$db->where("userID", $userID);
+	$db->update("UserLogin", $data);
+}
+
+/**
+ *
  * User Login
  *
  * Log a User in setting there userID in the session
@@ -111,15 +230,15 @@ function UserLogin()
 	if (count($errors) == 0) //If theres no errors so far
 	{
 		$userPassword = $_POST['password'];
-		
+		$userID = GetUserID($emailAddress);
 
-		$queryResult = $db->rawQuery("SELECT userID, userPassword FROM UserLogin WHERE userEmail = ?", Array($emailAddress));
-		if (count($queryResult) == 1)
+		if(!$userID)
 		{
-			$userID = $queryResult[0]["userID"];
-			$hashPass = $queryResult[0]["userPassword"];
-				
-			if (hash_equals(crypt($userPassword, $hashPass),$hashPass))
+			array_push($errors, $errorCodes["U005"]);
+		}
+		else
+		{
+			if(PasswordValidate($userID, $userPassword))
 			{
 				$_SESSION['userID'] = $userID;
 			}
@@ -127,15 +246,10 @@ function UserLogin()
 			{
 				array_push($errors, $errorCodes["U004"]);
 			}
-			
 			if (isset($_POST['rememberMe']))
 			{
 				newUserRememberMeCookie($userID);
 			}
-		}
-		else
-		{
-			array_push($errors, $errorCodes["U005"]);
 		}
 	}
 	
@@ -198,22 +312,22 @@ function newUserRememberMeCookie($userID, $currentToken = '')
 	$randomToken = hash('sha256', mt_rand());
 	
 	if ($currentToken== '') {
-		$data = Array ("userID" => $userID,
+		$data = Array("userID" => $userID,
                "rememberMeToken" => $randomToken,
                "loginAgent" => $_SERVER['HTTP_USER_AGENT'],
 			   "loginIP" =>  $_SERVER['REMOTE_ADDR'],
 			   "loginDatetime" => date("Y-m-d H:i:s"),
 			   "lastVisit" => date("Y-m-d H:i:s")
 		);
-		$db->insert ("UserSessions", $data);
+		$db->insert("UserSessions", $data);
 	}
 	else {
-		$db->where ("userID = ? AND rememberMeToken = ?", Array($userID, $currentToken));
-		$data = Array ("rememberMeToken" => $randomToken,
+		$db->where("userID = ? AND rememberMeToken = ?", Array($userID, $currentToken));
+		$data = Array("rememberMeToken" => $randomToken,
                "lastVisit" => date("Y-m-d H:i:s"),
 			   "lastVisitAgent" => $_SERVER['HTTP_USER_AGENT']
 		);
-		$db->update ("UserSessions", $data);
+		$db->update("UserSessions", $data);
 	}
 	
 	// generate cookie string that consists of userid, randomstring and combined hash of both
@@ -234,7 +348,7 @@ function newUserRememberMeCookie($userID, $currentToken = '')
  */
 function deleteRememberMeCookie($userID)
 {
-	global $db, $errorCodes;
+	global $db;
 	if (isset($_COOKIE['rememberMe'])) {
             list ($user_id, $token, $hash) = explode(':', $_COOKIE['rememberMe']);
             
@@ -244,6 +358,21 @@ function deleteRememberMeCookie($userID)
 			}
         setcookie('rememberMe', false, time() - (3600 * 3650), '/', "kate.ict.op.ac.nz");
     }
+}
+
+/**
+ *
+ * Deletes all remember me cookies
+ *
+ * Removes all of a users Remember me cookies from the database
+ * 
+ *
+ */
+function deleteAllRememberMeCookies($userID)
+{
+	global $db;
+	$db->where("userID = ?", Array($userID));
+	$db->delete("UserSessions");
 }
 
 /**
@@ -294,9 +423,7 @@ function UserRegister()
 				}
 				else
 				{
-					$emailCheck = $db->rawQuery("SELECT * FROM UserLogin WHERE userEmail = ?", Array($emailAddress));
-					//Check that email doesnt already exist in the DB	
-					if (count($emailCheck) > 0)
+					if(GetUserID($emailAddress))
 					{
 						array_push($errors, $errorCodes["U009"]);
 					}
@@ -351,18 +478,15 @@ function UserRegister()
 		array_push($errors, $errorCodes["U015"]);
 	}
 	else
-	{
-		$userName = $_POST['userName'];
-		
+	{	
 		$userNameCheck = "^([a-zA-Z])[a-zA-Z_-]*[\w_-]*[\S]$|^([a-zA-Z])[0-9_-]*[\S]$|^[a-zA-Z]*[\S]{5,20}$";
-		if (!preg_match("/$userNameCheck/", $_POST['userName'])) //check it meets the complexity requirements set above
+		if (!preg_match("/$userNameCheck/", filter_var($_POST['userName'], FILTER_SANITIZE_STRING))) //check it meets the complexity requirements set above
 		{
 			array_push($errors, $errorCodes["U016"]);
 		}
 		else
 		{
-			$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userName = ?", Array($userName));
-			if (count($queryResult) > 0)
+			if (UserNameCheck($_POST['userName']))
 			{
 				array_push($errors, $errorCodes["U017"]);
 			}
@@ -375,20 +499,16 @@ function UserRegister()
 		$userName = strtoupper(filter_var($_POST['userName'], FILTER_SANITIZE_STRING));
 		$firstName = filter_var($_POST['firstName'], FILTER_SANITIZE_STRING);
 		$lastName = filter_var($_POST['lastName'], FILTER_SANITIZE_STRING);
-		
-		$saltLength = 12;
-		//Generate Salt
-		$bytes = openssl_random_pseudo_bytes($saltLength);
-		$salt   = bin2hex($bytes);
-		
+		$password = $_POST['password'];
+
 		//hash password
-		$hashedPassword = crypt($password, '$5$rounds=5000$'. $salt .'$');
+		$hashedPassword = PasswordHash($password);
 		
 		//Add user to the Database
-		$data = Array ("userEmail" => $emailAddress,
-				"userPassword" => $hashedPassword
+		$data = Array("userEmail" => $emailAddress,
+					"userPassword" => $hashedPassword
 		);
-		$userID = $db->insert ("UserLogin", $data);	
+		$userID = $db->insert("UserLogin", $data);	
 		
 		//Create Profile
 		CreateProfile($userID, $firstName, $lastName, $userName);
@@ -404,4 +524,47 @@ function UserRegister()
 	
 	return $result;
 }
+
+/**
+ *
+ * Valadates a users Password
+ * 
+ * Validates the given password against the one stored in the database
+ * to check if it matches
+ *
+ * @param    int $userID of the user whos password needs validated
+ * @param    string $password the password to be validated
+ * @return   bool if the password matches
+ *
+ */
+function PasswordValidate($userID, $password)
+{
+	global $db;
+	
+	$result = false;
+
+	if($userID === 0)
+	{
+		return null;
+	}
+
+	if(strlen($password) == 0)
+	{
+		return null;
+	}
+
+	$queryResult = $db->rawQuery("SELECT userPassword FROM UserLogin WHERE userID = ?", Array($userID));
+	if (count($queryResult) == 1)
+	{
+		$hashPass = $queryResult[0]["userPassword"];
+			
+		if (hash_equals(crypt($password, $hashPass),$hashPass))
+		{
+			$result = true;
+		}
+	}
+
+	return $result;
+}
+
 ?>
