@@ -154,7 +154,7 @@ $errorCodes["S001"] = [
 	"field" => "sayBox",
 	"message" => "SayBox is empty",
 ];
-$errorCodes["S003"] = [
+$errorCodes["S002"] = [
 	"code" => "S002",
 	"field" => "commentBox",
 	"message" => "CommentBox is empty",
@@ -163,5 +163,122 @@ $errorCodes["S003"] = [
 	"code" => "S003",
 	"field" => "",
 	"message" => "Cannot Resay your own Say",
+];
+
+//ProfileAPI
+$errorCodes["P001"] = [
+	"code" => "P001",
+	"field" => "",
+	"message" => "Search is empty",
+];
+$errorCodes["P002"] = [
+	"code" => "P002",
+	"field" => "",
+	"message" => "Other User cannot be yourself",
+];
+$errorCodes["P003"] = [
+	"code" => "P003",
+	"field" => "",
+	"message" => "ProfileID of other user not provided",
+];
+$errorCodes["P004"] = [
+	"code" => "P004",
+	"field" => "",
+	"message" => "Already listening to the given user",
+];
+$errorCodes["P005"] = [
+	"code" => "P005",
+	"field" => "",
+	"message" => "Already not listening to the given user",
+];
+$errorCodes["P006"] = [
+	"code" => "P006",
+	"field" => "firstName",
+	"message" => "First Name is empty",
+];
+$errorCodes["P007"] = [
+	"code" => "P007",
+	"field" => "lastName",
+	"message" => "Last Name is empty",
+];
+$errorCodes["P008"] = [
+	"code" => "P008",
+	"field" => "userName",
+	"message" => "UserName is empty",
+];
+$errorCodes["P009"] = [
+	"code" => "P009",
+	"field" => "userName",
+	"message" => "UserName does not meet the complexity requirments",
+];
+$errorCodes["P010"] = [
+	"code" => "P010",
+	"field" => "dob",
+	"message" => "DOB is empty",
+];
+$errorCodes["P011"] = [
+	"code" => "P011",
+	"field" => "gender",
+	"message" => "Gender is empty",
+];
+$errorCodes["P012"] = [
+	"code" => "P012",
+	"field" => "userName",
+	"message" => "UserName already exists",
+];
+$errorCodes["P013"] = [
+	"code" => "P013",
+	"field" => "currentPassword",
+	"message" => "Current Password is empty",
+];
+$errorCodes["P014"] = [
+	"code" => "P014",
+	"field" => "newPassword",
+	"message" => "New Password is empty",
+];
+$errorCodes["P015"] = [
+	"code" => "P015",
+	"field" => "currentPassword",
+	"message" => "Current Password is incorrect",
+];
+$errorCodes["P016"] = [
+	"code" => "P016",
+	"field" => "userBio",
+	"message" => "userBio is over 500 characters",
+];
+$errorCodes["P017"] = [
+	"code" => "P017",
+	"field" => "newEmail",
+	"message" => "New Email field is empty",
+];
+$errorCodes["P018"] = [
+	"code" => "P018",
+	"field" => "newEmail",
+	"message" => "Invalid Email format",
+];
+$errorCodes["P019"] = [
+	"code" => "P019",
+	"field" => "confirmNewEmail",
+	"message" => "Confirm New Email is empty",
+];
+$errorCodes["P020"] = [
+	"code" => "P020",
+	"field" => "newEmail",
+	"message" => "New Email already exists",
+];
+$errorCodes["P021"] = [
+	"code" => "P021",
+	"field" => "newPassword/confirmNewPassword",
+	"message" => "New Password does not match Confirm New Password",
+];
+$errorCodes["P022"] = [
+	"code" => "P023",
+	"field" => "newPassword",
+	"message" => "New Password is empty",
+];
+$errorCodes["P023"] = [
+	"code" => "P023",
+	"field" => "confirmNewPassword",
+	"message" => "Confirm New Password is empty",
 ];
 ?>

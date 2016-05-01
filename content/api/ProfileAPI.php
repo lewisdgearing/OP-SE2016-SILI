@@ -96,7 +96,10 @@ function GetUserProfileID($userID)
 	if ($userID != 0)
 	{
 		$queryResult = $db->rawQuery("SELECT profileID FROM Profile WHERE userID = ?", Array($userID));
-		$profileID = $queryResult[0]["profileID"];
+		if(count($queryResult) == 1)
+		{
+			$profileID = $queryResult[0]["profileID"];
+		}
 	}
 
 	return $profileID;
@@ -117,7 +120,10 @@ function GetProfileID($userName)
 	if(strlen($userName != 0))
 	{
 		$queryResult = $db->rawQuery("SELECT profileID FROM Profile WHERE userName = ?", Array($userName));
-		$profileID = $queryResult[0]["profileID"];
+		if(count($queryResult) == 1)
+		{
+			$profileID = $queryResult[0]["profileID"];
+		}
 	}
 
 	return $profileID;
@@ -134,11 +140,70 @@ function GetProfileID($userName)
 function GetUserName($profileID)
 {
 	global $db;
-	$userName = "";
+	$userName = 0;
 	$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE profileID = ?", Array($profileID));
-	$userName = $queryResult[0]["userName"];
+	if(count($queryResult) == 1)
+	{
+		$userName = $queryResult[0]["userName"];
+	}
 
 	return $userName;
+}
+
+/**
+ *
+ * Find the userID of a user based on the profileID given
+ *
+ * @param    int $profileID of user whos userID is needed
+ * @return   int $userID of the user
+ *
+ */
+function GetProfileUserID($profileID)
+{
+	global $db;
+	$userID = 0;
+	$queryResult = $db->rawQuery("SELECT userID FROM Profile WHERE profileID = ?", Array($profileID));
+	if(count($queryResult) == 1)
+	{
+		$userID = $queryResult[0]["userID"];	
+	}	
+
+	return $userID;
+}
+
+/**
+ *
+ * Checks if the given username exists
+ *
+ * If profileID is given it wont check that profileID's userName,
+ * e.g. profileID = "abc" has a username = "bob" then 
+ * UserNameCheck("bob", "abc") will return false where as
+ * UserNameCheck("bob") will retun true
+ *
+ * @param    string $userName the userName to be checked
+ * @param 	 string $profileID to not check
+ * @return   bool if the userName exists
+ *
+ */
+function UserNameCheck($userName, $profileID = 0)
+{
+	global $db;
+	$result = false;
+	if($profileID == 0)
+	{
+		$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userName = ?", Array($userName));
+	}
+	else
+	{
+		$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userName = ? AND profileID != ?", Array($userName, $profileID));
+	}
+	
+	if(count($queryResult) == 1)
+	{
+		$result = true;
+	}	
+
+	return $result;
 }
 
 /**
@@ -205,17 +270,15 @@ function GetUserAccountSettings($profileID)
 			];
 			
 			
-		}		
+		}	
+		$result["userProfile"] = $profile;	
 	}
 	
-	if (count($errors) == 0) //If no errors user is logged in
-	{
-		$result["userProfile"] = $profile;
-	}
-	else
-	{
+	if (count($errors) != 0) //If no errors user is logged in
+	{	
 		$result["errors"] = $errors;
 	}
+
 	return $result;
 }
 
@@ -294,14 +357,10 @@ function GetUserProfile($profileID)
 		"listening" => getListeningStatus($profileID, $requestedProfileID),
 		];
 		
-		
-	}
-	
-	if (count($errors) == 0) //If no errors user is logged in
-	{
 		$result["userProfile"] = $profile;
 	}
-	else
+	
+	if (count($errors) != 0) //If no errors user is logged in
 	{
 		$result["errors"] = $errors;
 	}
@@ -415,17 +474,16 @@ function UserSearch()
 					"profileLink" => "profile/" . $userName,
 				];	
 				array_push($searchResults, $userResults);
-			 } 		
+			 } 	
+
+			 $result = $searchResults;	
 	}
 	else
 	{
-		array_push($errors, $errorCodes["G000"]);
+		array_push($errors, $errorCodes["P001"]);
 	}
-	if (count($errors) == 0)
-	{
-		$result = $searchResults;
-	}
-	else
+
+	if (count($errors) != 0)
 	{
 		$result["errors"] = $errors;
 	}
@@ -464,12 +522,12 @@ function ListenToUser($profileID)
 		$listenerProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);
 		if ($profileID == $listenerProfileID) 
 		{
-			array_push($errors, $errorCodes["G000"]);
+			array_push($errors, $errorCodes["P002"]);
 		}
 	}
 	else
 	{
-		array_push($errors, $errorCodes["G000"]);
+		array_push($errors, $errorCodes["P003"]);
 	}
 	
 	if ($profileID === 0)
@@ -493,17 +551,13 @@ function ListenToUser($profileID)
 		}
 		else
 		{
-			array_push($errors, $errorCodes["G000"]);
+			array_push($errors, $errorCodes["P004"]);
 		}
 						 
 	}
 
 
-	if (count($errors) == 0)
-	{
-		$result["message"] = "Listening to User";
-	}
-	else
+	if (count($errors) != 0)
 	{
 		$result["errors"] = $errors;
 	}
@@ -542,12 +596,12 @@ function StopListenToUser($profileID)
 		$listenerProfileID = filter_var($request[2], FILTER_SANITIZE_STRING);
 		if ($profileID == $listenerProfileID) 
 		{
-			array_push($errors, $errorCodes["G000"]);
+			array_push($errors, $errorCodes["P002"]);
 		}
 	}
 	else
 	{
-		array_push($errors, $errorCodes["G000"]);
+		array_push($errors, $errorCodes["P003"]);
 	}
 	
 	if ($profileID === 0)
@@ -569,15 +623,11 @@ function StopListenToUser($profileID)
 		}
 		else
 		{
-			array_push($errors, $errorCodes["G000"]);
+			array_push($errors, $errorCodes["P005"]);
 		}				
 	}
 
-	if (count($errors) == 0)
-	{
-		$result["message"] = "Stopped Listening to User";
-	}
-	else
+	if (count($errors) != 0)
 	{
 		$result["errors"] = $errors;
 	}
@@ -601,19 +651,21 @@ function GetListeners($profileID)
 	
 	$result = array();
 	$errors = array();
-	
+	$users = array();
+
 	//Pre Requirments
 	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	$listeners = array();
+
 	
 	if ($profileID === 0)
 	{
 		array_push($errors, $errorCodes["G002"]);
 	}
+
 	$requestedProfileID = $profileID;
 
 	$timestamp = microtime();
@@ -673,19 +725,16 @@ function GetListeners($profileID)
 					"profileImage" => $profileImagePath . $profileImage,
 					"profileLink" => "profile/" . $userName,
 				];	
-				array_push($listeners, $listener);
+				array_push($users, $listener);
 			}				
  
 		}
-		$totalPages = CalculateUserPages($requestedProfileID, $timestamp, "listeners");
+
+		$result["totalPages"] = CalculateUserPages($requestedProfileID, $timestamp, "listeners");
+		$result["users"] = $users;
 	}
 
-	if (count($errors) == 0)
-	{
-		$result["totalPages"] = $totalPages;
-		$result["users"] = $listeners;
-	}
-	else
+	if (count($errors) != 0)
 	{
 		$result["errors"] = $errors;
 	}
@@ -709,21 +758,22 @@ function GetAudience($profileID)
 	
 	$result = array();
 	$errors = array();
-	
+	$users = array();
+
 	//Pre Requirments
 	if ($db->ping() !== TRUE) 
 	{
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	$audienceMembers = array();
+
 	
 	if ($profileID === 0)
 	{
 		array_push($errors, $errorCodes["G002"]);
 	}
 	
-		$requestedProfileID = $profileID;
+	$requestedProfileID = $profileID;
 
 	$timestamp = microtime();
 	$offset = 0;
@@ -782,18 +832,15 @@ function GetAudience($profileID)
 					"profileImage" => $profileImagePath . $profileImage,
 					"profileLink" => "profile/" . $userName,
 				];	
-				array_push($audienceMembers, $audienceMember);
+				array_push($users, $audienceMember);
 			 }
 		}	
-		$totalPages = CalculateUserPages($requestedProfileID, $timestamp, "audience");
+
+		$result["totalPages"] = CalculateUserPages($requestedProfileID, $timestamp, "audience");
+		$result["users"] = $users;
 	}
 
-	if (count($errors) == 0)
-	{
-		$result["totalPages"] = $totalPages;
-		$result["users"] = $audienceMembers;
-	}
-	else
+	if (count($errors) != 0)
 	{
 		$result["errors"] = $errors;
 	}
@@ -873,40 +920,47 @@ function UpdateProfile($profileID)
 	
 	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 	
 	if ((!isset($_POST['firstName']) || strlen($_POST['firstName']) == 0))
 	{
-		array_push($errors, $errorCodes["P001"]);
+		array_push($errors, $errorCodes["P006"]);
 	}
 	
 	if ((!isset($_POST['lastName']) || strlen($_POST['lastName']) == 0))
 	{
-		array_push($errors, $errorCodes["P002"]);
+		array_push($errors, $errorCodes["P007"]);
 	}
 	
 	if ((!isset($_POST['userName']) || strlen($_POST['userName']) == 0))
 	{
-		array_push($errors, $errorCodes["P003"]);
+		array_push($errors, $errorCodes["P008"]);
 	}
 	else
 	{
 		$userNameCheck = "^([a-zA-Z])[a-zA-Z_-]*[\w_-]*[\S]$|^([a-zA-Z])[0-9_-]*[\S]$|^[a-zA-Z]*[\S]{5,20}$";
 		if (!preg_match("/$userNameCheck/", $_POST['userName'])) //check it meets the complexity requirements set above
 		{
-			array_push($errors, $errorCodes["P004"]);
+			array_push($errors, $errorCodes["P009"]);
+		}
+		else
+		{
+			if(UserNameCheck($_POST['userName'], $profileID))
+			{
+				array_push($errors, $errorCodes["P012"]);
+			}
 		}
 	}
 	
 	if ((!isset($_POST['dob']) || strlen($_POST['dob']) == 0))
 	{
-		array_push($errors, $errorCodes["P005"]);
+		array_push($errors, $errorCodes["P010"]);
 	}
 	
 	if ((!isset($_POST['gender']) || strlen($_POST['gender']) == 0))
 	{
-		array_push($errors, $errorCodes["P006"]);
+		array_push($errors, $errorCodes["P011"]);
 	}
 	
 		
@@ -921,31 +975,19 @@ function UpdateProfile($profileID)
 		$gender = substr($_POST['gender'], 0, 1);
 		$location =  filter_var($_POST['location'], FILTER_SANITIZE_STRING);
 		
-		$queryResult = $db->rawQuery("SELECT userName FROM Profile WHERE userName = ? AND profileID != ?", Array($userName, $profileID));
-		if (count($queryResult) == 0)
-		{
-			$data = Array(
-			    "firstName" => $firstName,
-			    "lastName" => $lastName,
-			    "userName" => $userName,
-			    "dob" => $dob,
-			    "gender" => $gender,
-				"location" => $location,
-			);
-			$db->where("profileID", $profileID);
-			$db->update("Profile", $data);
-		} 
-		else
-		{
-			array_push($errors, $errorCodes["P007"]);
-		}
+		$data = Array(
+		    "firstName" => $firstName,
+		    "lastName" => $lastName,
+		    "userName" => $userName,
+		    "dob" => $dob,
+		    "gender" => $gender,
+			"location" => $location,
+		);
+		$db->where("profileID", $profileID);
+		$db->update("Profile", $data);
 	}
 	
-	if (count($errors) == 0) //If no errors user is logged in
-	{
-		$result["message"] = "Profile Updated";
-	}
-	else
+	if (count($errors) != 0) //If no errors user is logged in
 	{
 		$result["errors"] = $errors;
 	}
@@ -961,11 +1003,10 @@ function UpdateProfile($profileID)
  * confirmation.
  *
  * @param    int $profileID of the current Profile
- * @param    int $userID of the current User
  * @return   arrray arrray result if it was successful or failed
  *
  */
-function UpdatePassword($profileID, $userID)
+function UpdatePassword($profileID)
 {
 	global $db, $errorCodes;
 	
@@ -977,15 +1018,15 @@ function UpdatePassword($profileID, $userID)
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if ($userID == 0)
+	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 	
 	
 	if (!isset($_POST['currentPassword']) || strlen($_POST['currentPassword']) == 0)
 	{
-		array_push($errors, $errorCodes["P008"]);
+		array_push($errors, $errorCodes["P013"]);
 	}
 	
 	if (isset($_POST['newPassword']) && strlen($_POST['newPassword']) > 0)
@@ -995,7 +1036,7 @@ function UpdatePassword($profileID, $userID)
 		$passwordCheck = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$";
 		if (!preg_match("/$passwordCheck/", $newPassword )) //check it meets the complexity requirements set above
 		{
-			array_push($errors, $errorCodes["P009"]);
+			array_push($errors, $errorCodes["P014"]);
 		}
 		else 
 		{
@@ -1004,60 +1045,42 @@ function UpdatePassword($profileID, $userID)
 				$confirmNewPassword = $_POST['confirmNewPassword'];
 				if ($confirmNewPassword != $newPassword) //check the both passwords match
 				{
-					array_push($errors, $errorCodes["P010"]);
+					array_push($errors, $errorCodes["P022"]);
 				}
 			}
 			else 
 			{
-				array_push($errors, $errorCodes["P011"]);
+				array_push($errors, $errorCodes["P024"]);
 			}
 		}
 	}	
+	else
+	{
+		array_push($errors, $errorCodes["P023"]);
+	}
 		
 	if (count($errors) == 0) 
 	{
 		$userPassword = $_POST['currentPassword'];
-		
-		$queryResult = $db->rawQuery("SELECT userPassword FROM UserLogin WHERE userID = ?", Array($userID));
-		if (count($queryResult) == 1)
-		{
-			$hashPass = $queryResult[0]["userPassword"];
+		$userID = GetProfileUserID($profileID);
 
-			if (hash_equals(crypt($userPassword, $hashPass),$hashPass))
-			{					
-				$saltLength = 12;
-				//Generate Salt
-				$bytes = openssl_random_pseudo_bytes($saltLength);
-				$salt   = bin2hex($bytes);
-				
-				//hash password
-				$hashedPassword = crypt($newPassword, '$5$rounds=5000$'. $salt .'$');
-				
-				$data = Array(
-				    "userPassword" => $hashedPassword,
-				);
-				$db->where("userID", $userID);
-				$db->update("UserLogin", $data);
-			}
-			else
-			{
-				array_push($errors, $errorCodes["P012"]);
-			}
+		if(PasswordValidate($userID, $userPassword))
+		{
+			$hashedPassword = PasswordHash($newPassword);
+			ChangePassword($userID, $hashedPassword);
+
 		}
 		else
 		{
-			array_push($errors, $errorCodes["G000"]);
-		}		
+			array_push($errors, $errorCodes["P015"]);
+		}
 	}
-	
-	if (count($errors) == 0) //If no errors user is logged in
-	{
-		$result["message"] = "Password Updated";
-	}
-	else
+
+	if (count($errors) != 0)
 	{
 		$result["errors"] = $errors;
 	}
+
 	return $result;
 }
 
@@ -1085,17 +1108,17 @@ function UpdateBio($profileID)
 	
 	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 	
 	if (!isset($_POST['userBio']) || strlen($_POST['userBio']) > 500)
 	{
-		array_push($errors, $errorCodes["P013"]);
+		array_push($errors, $errorCodes["P016"]);
 	}
 			
 	if (count($errors) == 0) 
 	{
-		$userBio =  substr(htmlentities($_POST['userBio']),0,500);
+		$userBio = htmlentities($_POST['userBio']);
 
 		$data = Array(
 			"userBio" => $userBio,
@@ -1104,11 +1127,7 @@ function UpdateBio($profileID)
 		$db->update("Profile", $data);
 	}
 	
-	if (count($errors) == 0) //If no errors user is logged in
-	{
-		$result["message"] = "Bio Updated";
-	}
-	else
+	if (count($errors) != 0) //If no errors user is logged in
 	{
 		$result["errors"] = $errors;
 	}
@@ -1124,11 +1143,10 @@ function UpdateBio($profileID)
  * matches.
  *
  * @param    int $profileID of the current Profile
- * @param    int $userID of the current User
  * @return   arrray arrray result if it was successful or failed
  *
  */
-function UpdateEmail($profileID, $userID)
+function UpdateEmail($profileID)
 {
 	global $db, $errorCodes;
 	
@@ -1140,15 +1158,15 @@ function UpdateEmail($profileID, $userID)
 		array_push($errors, $errorCodes["M001"]);
 	}
 	
-	if ($userID == 0)
+	if ($profileID === 0)
 	{
-		array_push($errors, $errorCodes["G001"]);
+		array_push($errors, $errorCodes["G002"]);
 	}
 	
 	
 	if (!isset($_POST['currentPassword']) || strlen($_POST['currentPassword']) == 0)
 	{
-		array_push($errors, $errorCodes["P008"]);
+		array_push($errors, $errorCodes["P012"]);
 	}
 	
 	if (isset($_POST['newEmail']) && strlen($_POST['newEmail']) > 0)
@@ -1157,70 +1175,52 @@ function UpdateEmail($profileID, $userID)
 		
 		if (!filter_var($newEmailAddress, FILTER_VALIDATE_EMAIL)) //Check if its a vaild email format 
 		{
-			array_push($errors, $errorCodes["P014"]);
+			array_push($errors, $errorCodes["P018"]);
 		}
 		else
 		{
 			if ((!isset($_POST['confirmNewEmail'])) || (strlen($_POST['confirmNewEmail']) == 0)) //Check if the confirmation email has been submitted 
 			{
-				array_push($errors, $errorCodes["P015"]);
+				array_push($errors, $errorCodes["P019"]);
 			}
 			else
 			{
 				$confirmNewEmail = filter_var($_POST['confirmNewEmail'],FILTER_SANITIZE_EMAIL);
 				if ($newEmailAddress != $confirmNewEmail) //Check if both email addresses match
 				{
-					array_push($errors, $errorCodes["P016"]);
+					array_push($errors, $errorCodes["P020"]);
+				}
+				else
+				{
+					if(GetUserID($_POST['newEmail']))
+					{
+						array_push($errors, $errorCodes["P021"]);		
+					}
 				}
 			}
 		}
 	}	
+	else
+	{
+		array_push($errors, $errorCodes["P017"]);
+	}
 		
 	if (count($errors) == 0) 
 	{
 		$userPassword = $_POST['currentPassword'];
+		$userID = GetProfileUserID($profileID);
 
-
-		
-		$queryResult = $db->rawQuery("SELECT userPassword FROM UserLogin WHERE userID = ?", Array($userID));
-		if (count($queryResult) == 1)
+		if(PasswordValidate($userID, $userPassword))
 		{
-			$hashPass = $queryResult[0]["userPassword"];
-					
-			if (hash_equals(crypt($userPassword, $hashPass),$hashPass))
-			{		
-				$queryResult = $db->rawQuery("SELECT userEmail FROM UserLogin WHERE userEmail = ?", Array($newEmailAddress));			
-				if (count($queryResult) == 0)
-				{
-
-					$data = Array(
-						"userEmail" => $newEmailAddress,
-					);
-					$db->where("userID", $userID);
-					$db->update("UserLogin", $data);
-							
-				}
-				else
-				{
-					array_push($errors, $errorCodes["P017"]);
-				}				
-			}
-			else
-			{
-				array_push($errors, $errorCodes["P012"]);
-			}
+			ChangeEmail($userID, $newEmailAddress);
 		}
 		else
 		{
-			array_push($errors, $errorCodes["G000"]);
+			array_push($errors, $errorCodes["P015"]);
 		}
 	}
 	
-	if (count($errors) == 0) //If no errors user is logged in
-	{
-		$result["message"] = "Email Updated";
-	}
-	else
+	if (count($errors) != 0) //If no errors user is logged in
 	{
 		$result["errors"] = $errors;
 	}
