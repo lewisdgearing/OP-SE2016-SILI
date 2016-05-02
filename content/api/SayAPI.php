@@ -23,6 +23,8 @@ if (!isset($internal) && !isset($controller))
 	exit;
 }
 
+include_once("../librarys/Giphy.php");
+
 //EmojiOne Code
 require('../librarys/emojione/autoload.php');
 $Emojione = new Emojione\Client(new Emojione\Ruleset());
@@ -89,14 +91,27 @@ function SayIt($profileID) //Adds A Say
 	}
 	else 
 	{
-		// Check if the Say has been submitted and is longer than 0 chars
-		if ((!isset($_POST['sayBox'])) || (strlen($_POST['sayBox']) == 0))
+		if((!isset($_POST['gifBox'])) || (strlen($_POST['gifBox']) == 0))
 		{
-			array_push($errors, $errorCodes["S001"]);
+			// Check if the Say has been submitted and is longer than 0 chars
+			if ((!isset($_POST['sayBox'])) || (strlen($_POST['sayBox']) == 0))
+			{
+				array_push($errors, $errorCodes["S001"]);
+			}
 		}
-		else
+		
+		if(count($errors) == 0)
 		{
-			$sayContent = htmlspecialchars($Emojione->toShort($_POST['sayBox']));
+			if(isset($_POST['gifBox']))
+			{
+				$gifID = filter_var($_POST['gifBox'], FILTER_SANITIZE_STRING);
+				$sayContent = json_encode(array('giphy' => $gifID));
+			}
+			else
+			{
+				$sayContent = htmlspecialchars($Emojione->toShort($_POST['sayBox']));
+			}
+			
 			$sayID = GenerateSayID();
 
 			$data = Array(
@@ -267,11 +282,11 @@ function FetchSay($sayID, $justMe = false, $requestedProfileID = 0) //Fetches th
 	if (count($queryResult) == 1)
 	{
 		$userProfile = GetUserProfile($profileID, $queryResult[0]["profileID"], "firstName, lastName, userName, profileImage, profileLink");
-		
+
 		$say = [
 		"sayID" => $queryResult[0]["sayID"],
 		"timePosted" => strtotime($queryResult[0]["timePosted"]) * 1000,
-		"message" => $Emojione->toImage($queryResult[0]["message"]),
+		"message" => CheckForGiphy($Emojione->toImage($queryResult[0]["message"])),
 		"messageClean" => $queryResult[0]["message"],
 		"firstName" => $userProfile["firstName"],
 		"lastName" => $userProfile["lastName"],
