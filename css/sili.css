@@ -377,3 +377,8 @@ input[type=file].profileImageUpload
 	max-height: 190px;
 	overflow-y: auto;
 }
+
+.nav-tabs
+{
+	margin-left: 15px;
+}

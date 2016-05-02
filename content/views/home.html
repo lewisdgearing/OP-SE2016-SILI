@@ -26,7 +26,7 @@
 				    			<input type="text" name="gifSearch" id="gifSearch" class="form-control" placeholder="GIF Search">
 								<form class="form-horizontal say-form" id="say-form" accept-charset="utf-8">
 									<div class="gifResults">
-										<select class="image-picker masonry gifs">
+										<select class="image-picker masonry gifs" name="gifBox">
 										</select>
 									</div>
 								<button type="submit" class="btn btn-default sayButton pull-right">Say It!</button>
@@ -58,11 +58,25 @@
            		 spinner:"spinner1"
         	});
 		    var el = $("#inputSay").emojioneArea();
+		    var timer = null;
 		    $("#gifSearch").keyup(function () {
 		    	var searchPhrase = $(this).val();
-				GIFSearch(searchPhrase);
+		    	if(timer) {
+				    clearTimeout(timer);
+				}
+
+				timer = setTimeout(GIFSearch(searchPhrase), 5000);
 		    });
 		    GIFTrending();
+		    var container = $("select.image-picker.masonry").next("ul.thumbnails");
+			container.imagesLoaded(function(){
+				container.masonry({
+					itemSelector: "li",
+					columnWidth: 5,
+					gutter: 1
+				});
+			});
+
 		});
 	</script>
 </body>
